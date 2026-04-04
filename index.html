@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>ADS Cyber VBlocks</title>
+  <title>VBlocks</title>
   <style>
     :root { color-scheme: dark; }
     * { box-sizing: border-box; }
@@ -27,17 +27,26 @@
     .btn-back { background:none; border:none; color:var(--title-color); font-size:24px; width:42px; height:42px; }
     .main-title { flex:1; text-align:center; font-weight:900; letter-spacing:1px; color:var(--title-color); }
     .profile-row { width:42px; }
-    .wallet-block { display:flex; justify-content:center; gap:18px; margin-bottom:7px; font-weight:700; color:#ffd800; }
-    .top-canvas-row { width:100%; max-width:410px; display:flex; justify-content:space-between; align-items:flex-end; margin-top:-24px; }
-    .side-canvas-block label { color:var(--panel-text); font-weight:700; }
+    .wallet-block { display:flex; justify-content:center; gap:18px; margin-bottom:10px; font-weight:700; color:#ffd800; }
+    .wallet-item { display:flex; align-items:center; gap:8px; }
+    .wallet-icon { width:28px; height:28px; object-fit:contain; border-radius:8px; flex:0 0 auto; }
+
+    .top-canvas-row { width:100%; max-width:410px; display:flex; justify-content:space-between; align-items:flex-start; margin-top:-10px; }
+    .side-canvas-block { display:flex; flex-direction:column; align-items:center; gap:6px; min-width:72px; }
+    .side-canvas-block label { color:var(--panel-text); font-weight:700; display:block; text-align:center; line-height:1; }
+
     #holdCanvas,#nextCanvas { background:var(--canvas-panel-bg); border:2px dashed var(--canvas-panel-border); border-radius:8px; }
     #gameCanvas { width:100%; max-width:330px; aspect-ratio:10/20; background:var(--canvas-bg); border-radius:8px; display:block; margin:0 auto; touch-action:none; }
-    .score-row { margin-top:8px; display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; color:var(--score-color); font-weight:700; }
+
     #controls { display:flex; justify-content:center; gap:10px; margin-top:10px; }
     #controls button, #pause-btn { background:var(--btn-bg); color:var(--btn-color); border:1px solid var(--btn-border); border-radius:12px; padding:10px 14px; font-weight:700; }
     #pause-btn { padding:6px; border-radius:999px; }
     .music-btn-img { width:22px; height:22px; vertical-align:middle; }
-    @media (max-width: 480px) { .main-content{width:100vw;} .top-canvas-row{margin-top:-8px;} }
+
+    @media (max-width: 480px) {
+      .main-content { width:100vw; }
+      .top-canvas-row { margin-top:0; }
+    }
   </style>
 </head>
 <body data-theme="cyber">
@@ -45,19 +54,43 @@
     <div class="top-bar">
       <div class="top-bar-row">
         <button class="btn-back" onclick="history.back()">←</button>
-        <span class="main-title">V-Blocks Cyber ADS</span>
+        <span class="main-title">VBlocks</span>
         <div class="profile-row"></div>
       </div>
-      <div class="wallet-block"><span>🪙 <span id="vcoin-amount">0</span></span><span>🎟️ <span id="jeton-amount">0</span></span></div>
+
+      <div class="wallet-block">
+        <span class="wallet-item">
+          <img src="assets/images/vblocks-icon.webp" alt="" class="wallet-icon">
+          <span id="vcoin-amount">0</span>
+        </span>
+
+        <span class="wallet-item">
+          <img src="assets/images/vblocks-icon.webp" alt="" class="wallet-icon">
+          <span id="jeton-amount">0</span>
+        </span>
+      </div>
     </div>
+
     <div class="top-canvas-row">
-      <div class="side-canvas-block"><label>Réserve</label><canvas id="holdCanvas" width="48" height="48"></canvas></div>
+      <div class="side-canvas-block">
+        <label>Reserve</label>
+        <canvas id="holdCanvas" width="48" height="48"></canvas>
+      </div>
+
       <div><button id="pause-btn">⏸</button></div>
-      <div class="side-canvas-block"><label>Suivante</label><canvas id="nextCanvas" width="48" height="48"></canvas></div>
+
+      <div class="side-canvas-block">
+        <label>Next</label>
+        <canvas id="nextCanvas" width="48" height="48"></canvas>
+      </div>
     </div>
+
     <div class="game-flex-wrap"><canvas id="gameCanvas"></canvas></div>
-    <div class="score-row"><span>Score: <span id="score">0</span></span><span>Record: <span id="highscore-global">0</span></span></div>
-    <div id="controls"><button id="music-btn">Musique</button><button onclick="location.reload()">Rejouer</button></div>
+
+    <div id="controls">
+      <button id="music-btn">Musique</button>
+      <button onclick="location.reload()">Rejouer</button>
+    </div>
   </div></div>
   <audio id="music" src="assets/sounds/chill.mp3" loop></audio>
   <script>
@@ -916,19 +949,13 @@ overlay.querySelector('#resume-yes').onclick = () => {
     // Nouvelle popup de fin de partie (+ revive)
     function showEndPopup(points) {
       if (endHandled) return;
-      // ⚠️ on NE met PAS endHandled=true ici — on attend la confirmation fin
-      try { window.partieTerminee?.(); } catch(_){}
+      try { window.partieTerminee?.(); } catch(_) {}
 
       paused = true;
       stopSoftDrop();
       stopHorizontalRepeat();
-
       safeRedraw();
-
-      // on efface ttes sauvegardes → pas de "reprendre"
       clearSavedGame();
-
-      // ❌ Ancienne IIFE de crédit supprimée : on crédite au Restart/Quit
 
       const old = document.getElementById('gameover-popup');
       if (old) old.remove();
@@ -939,14 +966,66 @@ overlay.querySelector('#resume-yes').onclick = () => {
       }
 
       const canRevive = !reviveUsed;
+      const STORE_URL = 'https://play.google.com/store/apps/details?id=com.vboldstudio.VBlocks';
+      let storeTimer = null;
+
+      function openStoreContinuePopup() {
+        const oldStore = document.getElementById('store-continue-popup');
+        if (oldStore) oldStore.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'store-continue-popup';
+        overlay.style = `
+          position:fixed;
+          inset:0;
+          z-index:100000;
+          background:rgba(0,0,0,0.6);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        `;
+
+        overlay.innerHTML = `
+          <div style="background:#23294a;border-radius:1em;padding:22px 16px;box-shadow:0 0 14px #3ff7;min-width:260px;max-width:92vw;text-align:center">
+            <div style="font-size:1.15em;font-weight:800;margin-bottom:10px;">Continue ?</div>
+            <div style="opacity:.9;margin-bottom:14px;">Ouvrir VBlocks sur le Play Store ?</div>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+              <button id="store-go-btn" style="padding:.65em 1.1em;border-radius:.8em;border:none;background:#39f;color:#fff;cursor:pointer;">
+                Continuer
+              </button>
+              <button id="store-later-btn" style="padding:.65em 1.1em;border-radius:.8em;border:none;background:#444;color:#fff;cursor:pointer;">
+                Plus tard
+              </button>
+            </div>
+          </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        document.getElementById('store-go-btn').onclick = () => {
+          window.location.href = STORE_URL;
+        };
+
+        document.getElementById('store-later-btn').onclick = () => {
+          overlay.remove();
+        };
+      }
+
       const popup = document.createElement('div');
       popup.id = 'gameover-popup';
       popup.style = `
-        position: fixed; left:0; top:0; width:100vw; height:100vh; z-index:99999;
-        background: rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center;
+        position: fixed;
+        left:0;
+        top:0;
+        width:100vw;
+        height:100vh;
+        z-index:99999;
+        background: rgba(0,0,0,0.55);
+        display:flex;
+        align-items:center;
+        justify-content:center;
       `;
-      const rewardAmount = Number(window.REWARD_VCOINS || 300);
-      let rewardClaimedOnEndPopup = false;
+
       popup.innerHTML = `
         <div style="background:#23294a;border-radius:1em;padding:24px 16px;box-shadow:0 0 14px #3ff7;min-width:260px;max-width:92vw;text-align:center">
           <div style="font-size:1.2em;font-weight:bold;margin-bottom:10px;">
@@ -960,7 +1039,7 @@ overlay.querySelector('#resume-yes').onclick = () => {
 
           <div style="display:flex;flex-direction:column;gap:10px;width:100%">
             <button
-              id="end-reward-vcoins"
+              id="end-store-download"
               class="btn-primary"
               style="
                 width:100%;
@@ -974,12 +1053,10 @@ overlay.querySelector('#resume-yes').onclick = () => {
                 align-items:center;
                 justify-content:center;
                 box-shadow:0 0 12px #39f7;
+                font-weight:800;
               "
             >
-              <span style="display:flex;align-items:center;justify-content:center;gap:10px;font-weight:800;width:100%;">
-                <img src="assets/images/vcoin.webp" alt="" style="width:24px;height:24px;object-fit:contain;">
-                <span>+${rewardAmount}</span>
-              </span>
+              Télécharger
             </button>
 
             <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
@@ -1020,26 +1097,34 @@ overlay.querySelector('#resume-yes').onclick = () => {
           </div>
         </div>
       `;
+
       document.body.appendChild(popup);
 
       async function doRevive(withAd) {
+        if (storeTimer) {
+          clearTimeout(storeTimer);
+          storeTimer = null;
+        }
+
         if (withAd) {
-          // Marque pub active (pour le gel) puis réinitialise quoi qu’il arrive
           window.__ads_active = true;
           window.__ads_freeze = true;
-          const resetAds = () => { window.__ads_active = false; window.__ads_freeze = false; };
+          const resetAds = () => {
+            window.__ads_active = false;
+            window.__ads_freeze = false;
+          };
 
           if (typeof window.showRewardRevive === 'function') {
             const ok = await new Promise(resolve => {
               try { window.showRewardRevive(closedOk => resolve(!!closedOk)); }
               catch(_) { resolve(false); }
             });
+
             resetAds();
             if (!ok) return;
 
             reviveUsed = true;
             try { popup.remove(); } catch(_) {}
-            // ✅ Réarmer les flags pour permettre la prochaine popup de fin
             endHandled = false;
             creditDone = false;
             gameOver = false;
@@ -1047,7 +1132,6 @@ overlay.querySelector('#resume-yes').onclick = () => {
             return;
           }
 
-          // Fallback web/dev si showRewardRevive indisponible
           await showInterstitial();
           resetAds();
           reviveUsed = true;
@@ -1059,18 +1143,26 @@ overlay.querySelector('#resume-yes').onclick = () => {
           return;
         }
 
-        // Revive via JETON
         const okTok = await useJeton();
-        if (!okTok) { alert('Pas assez de jetons.'); return; }
+        if (!okTok) {
+          alert('Pas assez de jetons.');
+          return;
+        }
+
         reviveUsed = true;
         try { popup.remove(); } catch(_) {}
-        endHandled = false;      // ✅ clé : autoriser la prochaine popup
-        creditDone = false;      // ✅ pas de crédit encore
+        endHandled = false;
+        creditDone = false;
         gameOver = false;
         reviveRewindAndResume();
       }
 
       document.getElementById('end-restart').onclick = async function () {
+        if (storeTimer) {
+          clearTimeout(storeTimer);
+          storeTimer = null;
+        }
+
         await commitEndRewards(points);
         endHandled = true;
 
@@ -1086,6 +1178,11 @@ overlay.querySelector('#resume-yes').onclick = () => {
       };
 
       document.getElementById('end-quit').onclick = async function () {
+        if (storeTimer) {
+          clearTimeout(storeTimer);
+          storeTimer = null;
+        }
+
         await commitEndRewards(points);
         endHandled = true;
 
@@ -1098,11 +1195,13 @@ overlay.querySelector('#resume-yes').onclick = () => {
 
         window.location.href = INDEX_URL;
       };
+
       const btnTok = document.getElementById('end-revive-token');
       const btnAd = document.getElementById('end-revive-ad');
-      const btnReward = document.getElementById('end-reward-vcoins');
-      if (btnReward?.animate) {
-        btnReward.animate(
+      const btnStore = document.getElementById('end-store-download');
+
+      if (btnStore?.animate) {
+        btnStore.animate(
           [
             { transform: 'scale(1)', boxShadow: '0 0 12px #39f7' },
             { transform: 'scale(1.04)', boxShadow: '0 0 24px #39f7' },
@@ -1119,682 +1218,23 @@ overlay.querySelector('#resume-yes').onclick = () => {
       if (btnTok) btnTok.onclick = function () { doRevive(false); };
       if (btnAd) btnAd.onclick = function () { doRevive(true); };
 
-      if (btnReward) {
-        btnReward.onclick = async function () {
-          if (rewardClaimedOnEndPopup) return;
+      if (btnStore) {
+        btnStore.onclick = function () {
+          if (storeTimer) return;
 
-          btnReward.disabled = true;
-          btnReward.style.opacity = '.7';
+          btnStore.disabled = true;
+          btnStore.style.opacity = '.7';
+          btnStore.textContent = 'Patientez...';
 
-          try {
-            const ok = (typeof window.showRewardVcoins === 'function')
-              ? await window.showRewardVcoins()
-              : false;
-
-            if (!ok) {
-              btnReward.disabled = false;
-              btnReward.style.opacity = '1';
-              return;
-            }
-
-            rewardClaimedOnEndPopup = true;
-            btnReward.style.display = 'none';
-
-            try {
-              if (typeof window.updateVCoinsDisplay === 'function') {
-                await window.updateVCoinsDisplay();
-              }
-            } catch (_) {}
-
-            try {
-              const vcoins = await userData.getVCoins?.();
-              const el =
-                document.getElementById('header-vcoins') ||
-                document.getElementById('vcoinsCount') ||
-                document.getElementById('vcoin-amount');
-
-              if (el) el.textContent = String(vcoins ?? 0);
-            } catch (_) {}
-          } catch (_) {
-            btnReward.disabled = false;
-            btnReward.style.opacity = '1';
-            alert(tt('pub.err','Publicité indisponible pour le moment.'));
-          }
+          storeTimer = setTimeout(() => {
+            storeTimer = null;
+            btnStore.disabled = false;
+            btnStore.style.opacity = '1';
+            btnStore.textContent = 'Télécharger';
+            openStoreContinuePopup();
+          }, 10000);
         };
       }
-    }
-
-    function reviveRewindAndResume() {
-      if (history.length === 0) return;
-      const index = history.length > 8 ? history.length - 8 : 0;
-      const state = history[index];
-      history = history.slice(0, index);
-
-      board = state.board.map(r => r.slice());
-      currentPiece = JSON.parse(JSON.stringify(state.currentPiece));
-      nextPiece = JSON.parse(JSON.stringify(state.nextPiece));
-      heldPiece = state.heldPiece ? JSON.parse(JSON.stringify(state.heldPiece)) : null;
-      score = state.score;
-      combo = state.combo;
-      linesCleared = state.linesCleared;
-      dropInterval = state.dropInterval || 500;
-
-      if (state.piecesSequence && Array.isArray(state.piecesSequence)) {
-        piecesSequence = state.piecesSequence.slice();
-      }
-      if (Number.isInteger(state.piecesUsed)) {
-        piecesUsed = state.piecesUsed;
-      }
-
-      ensureRenderablePieces();
-
-      // ❄️ Assure qu'aucun flag pub ne bloque
-      window.__ads_active = false;
-      window.__ads_freeze = false;
-
-      paused = true;
-      gameOver = false;
-      safeRedraw();
-
-      // 2) Compte à rebours court (i18n)
-      let countdown = 3;
-      const overlay = document.createElement('div');
-      overlay.id = 'countdown-overlay';
-      overlay.style = `
-        position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.6);
-        color:#fff;display:flex;align-items:center;justify-content:center;font-size:4em;z-index:99998;
-      `;
-      overlay.textContent = tt('revive.count','{n}', { n: countdown });
-      document.body.appendChild(overlay);
-      const tmr = setInterval(() => {
-        countdown--;
-        overlay.textContent = tt('revive.count','{n}', { n: countdown });
-        if (countdown <= 0) {
-          clearInterval(tmr);
-          overlay.remove();
-
-// 3) Restaure et démarre rampe de vitesse
-paused = false;
-gameOver = false;
-
-reviveTargetInterval = dropInterval || 500;
-dropInterval = 1200; // très lent au départ
-reviveRampActive = true;
-reviveRampStart = performance.now();
-
-lastTime = performance.now();
-
-// ⬅️ Ne pas compter la reprise post-revive comme une action
-window.__ads_skip_next_action = true;
-
-try { window.partieReprisee?.(mode); } catch(_) {}
-
-requestAnimationFrame(update);
-
-        }
-      }, 1000);
-    }
-
-    function rewind() {
-      if (history.length === 0) return;
-      const index = history.length > 8 ? history.length - 8 : 0;
-      const state = history[index];
-      history = history.slice(0, index);
-
-      board = state.board.map(r => r.slice());
-      currentPiece = JSON.parse(JSON.stringify(state.currentPiece));
-      nextPiece = JSON.parse(JSON.stringify(state.nextPiece));
-      heldPiece = state.heldPiece ? JSON.parse(JSON.stringify(state.heldPiece)) : null;
-      score = state.score;
-      combo = state.combo;
-      linesCleared = state.linesCleared;
-      dropInterval = state.dropInterval || 500;
-
-      if (state.piecesSequence && Array.isArray(state.piecesSequence)) {
-        piecesSequence = state.piecesSequence.slice();
-      }
-      if (Number.isInteger(state.piecesUsed)) {
-        piecesUsed = state.piecesUsed;
-      }
-
-      ensureRenderablePieces();
-
-      paused = true;
-      gameOver = false;
-      safeRedraw();
-
-      let countdown = 5;
-      const overlay = document.createElement('div');
-      overlay.id = 'countdown-overlay';
-      overlay.style = `
-        position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.6);
-        color:#fff;display:flex;align-items:center;justify-content:center;font-size:4em;z-index:99998;
-      `;
-      overlay.textContent = countdown;
-      document.body.appendChild(overlay);
-      let tmr = setInterval(() => {
-        countdown--;
-        overlay.textContent = countdown;
-        if (countdown <= 0) {
-          clearInterval(tmr);
-          overlay.remove();
-          paused = false;
-          gameOver = false;
-          lastTime = performance.now();
-          requestAnimationFrame(update);
-        }
-      }, 1000);
-    }
-
-    function togglePause() {
-      paused = !paused;
-      if (paused) {
-        stopSoftDrop();
-        stopHorizontalRepeat();
-      }
-      safeRedraw();
-      if (!paused && !gameOver) requestAnimationFrame(update);
-    }
-    global.togglePause = togglePause;
-
-    setTimeout(() => {
-      let btn = document.getElementById('pause-btn');
-      if (btn) btn.onclick = (e) => { e.preventDefault(); togglePause(); };
-      const btnRestart = document.getElementById('restart-btn');
-      if (btnRestart) btnRestart.onclick = (e) => { e.preventDefault(); restartGameHard(); };
-    }, 200);
-
-    const SPEED_TABLE = [
-      800, 720, 630, 550, 470, 380, 300, 220, 130, 100,
-       83,  83,  83,  67,  67,  67,  50,   50,  50,  33,
-       33,  33,  33,  33,  33,  33,  33,  33,  17
-    ];
-
-const scoreEl = document.getElementById('score');
-if (scoreEl) scoreEl.textContent = '0';
-
-// Cherche l’élément à l’instant où on en a besoin (pas au chargement)
-function setHighText(val) {
-  const el = document.getElementById('highscore') || document.getElementById('highscore-global');
-  if (el) el.textContent = String(val);
-}
-
-async function updateHighscoreDisplay() {
-  // essaie d’abord la RPC; si KO, fallback userData
-  let cloud = null;
-  try {
-    if (typeof getHighScoreSupabase === 'function') {
-      cloud = await getHighScoreSupabase();
-    }
-  } catch (_) {}
-
-  if (cloud == null && userData?.getHighScore) {
-    try { cloud = await userData.getHighScore(); } catch (_) {}
-  }
-
-  highscoreCloud = Number(cloud) || 0;
-  setHighText(highscoreCloud);
-}
-
-// Appel immédiat si le DOM est déjà prêt, sinon on attend
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', updateHighscoreDisplay);
-} else {
-  updateHighscoreDisplay();
-}
-
-// Alias (deux orthographes utilisées ailleurs dans le code)
-window.updateHighscoreDisplay = updateHighscoreDisplay;
-window.updateHighScoreDisplay = updateHighscoreDisplay;
-
-
-    // === SCORE: barème fixe (sans combo/enchaînement) ===
-    function computeScore(lines) {
-      const TABLE = [0, 10, 25, 40, 60]; // 0,1,2,3,4 lignes
-      return TABLE[lines] || 0;
-    }
-
-    async function startGame() {
-      try { window.partieCommencee?.(mode); } catch(_){}
-
-      paused = false;
-      gameOver = false;
-      lastTime = 0;
-      reviveUsed = false; // ✅ nouvelle partie → re-autorise 1 revive
-      endHandled = false;
-      creditDone = false;
-
-      if (mode === 'duel') await setupDuelSequence();
-      if (mode !== 'duel') {
-        piecesSequence = generateSequenceClassic(200);
-        piecesUsed = 0;
-      }
-      nextPiece = newPiece();
-      reset();
-      saveHistory();
-      window.startMusicForGame?.();
-      requestAnimationFrame(update);
-    }
-
-    function newPiece() {
-      let typeId;
-      if (mode === 'duel') typeId = getDuelNextPieceId();
-      else typeId = getNextPieceIdGeneric();
-
-      if (typeId < 0 || typeId > 6 || Number.isNaN(typeId)) {
-        typeId = Math.floor(Math.random() * PIECES.length);
-      }
-
-      const letter = LETTERS[typeId];
-      return createSafePiece(letter);
-    }
-
-    function collision(p = currentPiece) {
-      if (!p || !p.shape) return false;
-      return p.shape.some((row, dy) =>
-        row.some((val, dx) => {
-          if (!val) return false;
-          const x = p.x + dx;
-          const y = p.y + dy;
-          return x < 0 || x >= COLS || y >= ROWS || (y >= 0 && board[y][x]);
-        })
-      );
-    }
-
-    function merge() {
-      currentPiece.shape.forEach((row, dy) =>
-        row.forEach((val, dx) => {
-          if (val) {
-            const x = currentPiece.x + dx;
-            const y = currentPiece.y + dy;
-            if (y >= 0) {
-              if (isVariantTheme(currentTheme)) {
-                board[y][x] = { letter: currentPiece.letter, variant: currentPiece.variants?.[dy]?.[dx] ?? 0 };
-              } else {
-                board[y][x] = currentPiece.letter;
-              }
-            }
-          }
-        })
-      );
-      clearLines();
-      scheduleSave();
-    }
-
-    function clearLines() {
-      let lines = 0;
-      board = board.filter(row => {
-        if (row.every(cell => cell !== '')) { lines++; return false; }
-        return true;
-      });
-      while (board.length < ROWS) board.unshift(Array(COLS).fill(''));
-      if (lines > 0) {
-        if (window.vibrateIfEnabled) window.vibrateIfEnabled(lines >= 4 ? 200 : 70);
-        combo++;
-        linesCleared += lines;
-        let pts = computeScore(lines, combo);
-        score += pts;
-        if (scoreEl) scoreEl.textContent = score;
-
-if (score > highscoreCloud) {
-  const newHS = score;
-  highscoreCloud = newHS;
-  setHighText(newHS);
-
-  Promise.resolve()
-    .then(() => userData?.setHighScore ? userData.setHighScore(newHS) : null)
-    .then(() => (typeof setHighScoreSupabase === 'function') ? setHighScoreSupabase(newHS) : null)
-    .finally(() => {
-      if (typeof window.updateHighscoreDisplay === 'function') window.updateHighscoreDisplay();
-      if (typeof window.updateHighScoreDisplay === 'function') window.updateHighscoreDisplay();
-    })
-    .catch(e => console.warn('[HS] save failed:', e));
-}
-
-
-        if (mode === 'classic' || mode === 'duel') {
-          let level = Math.floor(linesCleared / 7);
-          if (level >= SPEED_TABLE.length) level = SPEED_TABLE.length - 1;
-          dropInterval = SPEED_TABLE[level];
-        }
-      } else {
-        combo = 0;
-      }
-    }
-
-    function move(offset) {
-      if (!currentPiece || !currentPiece.shape) return;
-      currentPiece.x += offset;
-      if (collision()) currentPiece.x -= offset;
-      scheduleSave();
-    }
-
-    function dropPiece() {
-      if (!currentPiece || !currentPiece.shape) return;
-      currentPiece.y++;
-      if (collision()) {
-        currentPiece.y--;
-        stopSoftDrop();
-        mustLiftFingerForNextSoftDrop = true;
-
-        merge();
-        saveHistory();
-        reset();
-        if (collision()) {
-          showEndPopup(score);
-          gameOver = true;
-        }
-      }
-    }
-
-    // 🔒 rotation lock global (empêche rotation pendant glissements/softdrop/quickdrop)
-    let rotationLocked = false;
-
-    function rotatePiece() {
-      if (rotationLocked || !currentPiece || !currentPiece.shape) return; // 🔒
-      const shape = currentPiece.shape;
-      let oldVariants = null;
-      if (isVariantTheme(currentTheme)) oldVariants = currentPiece.variants;
-
-      currentPiece.shape = shape[0].map((_, i) => shape.map(r => r[i])).reverse();
-      if (isVariantTheme(currentTheme)) {
-        if (oldVariants && oldVariants[0]) {
-          currentPiece.variants = oldVariants[0].map((_, i) => oldVariants.map(r => r[i])).reverse();
-        }
-      }
-
-      if (collision()) {
-        currentPiece.shape = shape;
-        if (isVariantTheme(currentTheme)) currentPiece.variants = oldVariants;
-      } else {
-        scheduleSave();
-      }
-    }
-
-    function clonePiece(p) {
-      return JSON.parse(JSON.stringify(p));
-    }
-
-    // === HOLD = échange instantané
-    function tryKickPlace(p, targetX, targetY) {
-      const kicks = [[0,0],[-1,0],[1,0],[0,-1],[-2,0],[2,0],[0,-2]];
-      const bx = p.x, by = p.y;
-      for (const [kx,ky] of kicks) {
-        p.x = targetX + kx; p.y = targetY + ky;
-        if (!collision(p)) return true;
-      }
-      p.x = bx; p.y = by;
-      return false;
-    }
-
-    function holdPieceSwapStay() {
-      if (!currentPiece) return;
-
-      const cx = currentPiece.x;
-      const cy = currentPiece.y;
-      const cshape = currentPiece.shape.map(r=>r.slice());
-      const cvars  = currentPiece.variants ? currentPiece.variants.map(r=>r.slice()) : null;
-      const clet   = currentPiece.letter;
-
-      if (!heldPiece) {
-        heldPiece = clonePiece(currentPiece);
-        currentPiece = clonePiece(nextPiece);
-        nextPiece = newPiece();
-      } else {
-        const tmp = clonePiece(currentPiece);
-        currentPiece = clonePiece(heldPiece);
-        heldPiece = tmp;
-      }
-
-      currentPiece.x = cx;
-      currentPiece.y = cy;
-
-      if (collision(currentPiece)) {
-        if (!tryKickPlace(currentPiece, cx, cy)) {
-          if (heldPiece && heldPiece.letter === clet) {
-            const tmp = heldPiece;
-            heldPiece = currentPiece;
-            currentPiece = tmp;
-          } else {
-            currentPiece.shape = cshape;
-            currentPiece.letter = clet;
-            currentPiece.variants = cvars;
-            currentPiece.x = cx;
-            currentPiece.y = cy;
-          }
-          return;
-        }
-      }
-
-      holdUsed = false;
-      ensureRenderablePieces();
-      drawMiniPiece(holdCtx, heldPiece);
-      drawMiniPiece(nextCtx, nextPiece);
-      scheduleSave();
-      safeRedraw();
-    }
-
-    function getGhostPiece() {
-      if (!ghostPieceEnabled) return null;
-      if (!currentPiece || !currentPiece.shape) return null;
-      let ghost = JSON.parse(JSON.stringify(currentPiece));
-      while (!collision(ghost)) { ghost.y++; }
-      ghost.y--;
-      return ghost;
-    }
-
-    // === HARD DROP
-    function hardDrop() {
-      if (!currentPiece) return;
-      const ghost = getGhostPiece();
-      if (!ghost) return;
-      currentPiece.y = ghost.y;
-      stopSoftDrop();
-      merge();
-      saveHistory();
-      reset();
-      lastTime = performance.now();
-      if (collision()) {
-        showEndPopup(score);
-        gameOver = true;
-      }
-      if (!gameOver && !paused) requestAnimationFrame(update);
-    }
-
-    function drawBlockCustom(c, x, y, letter, size = BLOCK_SIZE, ghost = false, variant = 0) {
-      let img = blockImages[letter];
-      const px = x * size, py = y * size;
-      if (ghost) c.globalAlpha = 0.33;
-
-      if (isVariantTheme(currentTheme) && blockImages[currentTheme]) {
-        let v = variant ?? 0;
-        if (typeof letter === 'object' && letter.letter) {
-          v = letter.variant ?? 0;
-          letter = letter.letter;
-        }
-        const arr = blockImages[currentTheme];
-        img = arr[v % arr.length];
-      }
-
-      if (img && img.complete && img.naturalWidth > 0) {
-        c.drawImage(img, px, py, size, size);
-      } else {
-        if (currentTheme === 'nuit') {
-          c.fillStyle = '#ccc';
-          fillRectThemeSafe(c, px, py, size);
-        } else if (currentTheme === 'neon') {
-          const color = global.currentColors?.[letter] || '#fff';
-          c.fillStyle = '#111';
-          fillRectThemeSafe(c, px, py, size);
-          c.shadowColor = color;
-          c.shadowBlur = (ghost ? 3 : 15);
-          c.strokeStyle = color;
-          c.lineWidth = 2;
-          c.strokeRect(px + 1, py + 1, size - 2, size - 2);
-          c.shadowBlur = 0;
-        } else if (currentTheme === 'retro') {
-          const color = global.currentColors?.[letter] || '#fff';
-          c.fillStyle = color;
-          fillRectThemeSafe(c, px, py, size);
-          c.strokeStyle = '#000';
-          c.lineWidth = 1;
-          c.strokeRect(px, py, size, size);
-        } else {
-          const fb = global.currentColors?.[letter] || '#999';
-          c.fillStyle = fb;
-          fillRectThemeSafe(c, px, py, size);
-          c.strokeStyle = '#333';
-          c.strokeRect(px, py, size, size);
-        }
-      }
-      if (ghost) c.globalAlpha = 1.0;
-    }
-
-    function drawBoard() {
-      ensureRenderablePieces();
-      clearCanvas(ctx, canvas);
-
-      const { x: OX, y: OY } = boardOffsets();
-      ctx.save();
-      try {
-        ctx.translate(OX, OY);
-
-        const ghost = getGhostPiece();
-        if (ghost) {
-          ghost.shape.forEach((row, dy) =>
-            row.forEach((val, dx) => {
-              if (val) drawBlockCustom(
-                ctx, ghost.x + dx, ghost.y + dy, ghost.letter, BLOCK_SIZE, true,
-                (currentTheme && isVariantTheme(currentTheme)) ? ghost.variants?.[dy]?.[dx] : 0
-              );
-            })
-          );
-        }
-
-        board.forEach((row, y) =>
-          row.forEach((cell, x) => {
-            if (!cell) return;
-            if (isVariantTheme(currentTheme)) {
-              drawBlockCustom(ctx, x, y, cell.letter || cell, BLOCK_SIZE, false, cell.variant || 0);
-            } else {
-              drawBlockCustom(ctx, x, y, cell);
-            }
-          })
-        );
-
-        if (currentPiece && currentPiece.shape) {
-          currentPiece.shape.forEach((row, dy) =>
-            row.forEach((val, dx) => {
-              if (!val) return;
-              drawBlockCustom(
-                ctx, currentPiece.x + dx, currentPiece.y + dy, currentPiece.letter, BLOCK_SIZE, false,
-                (currentTheme && isVariantTheme(currentTheme)) ? currentPiece.variants?.[dy]?.[dx] : 0
-              );
-            })
-          );
-        }
-      } finally {
-        ctx.restore();
-      }
-    }
-
-    function safeRedraw() {
-      try {
-        ensureRenderablePieces();
-        drawBoard();
-      } catch (e) {
-        console.error('[VBlocks] drawBoard failed', e, {
-          currentPiece,
-          nextPiece,
-          heldPiece,
-          currentTheme,
-          score,
-          linesCleared,
-          mode
-        });
-
-        try {
-          recoverPiecesForRender();
-          drawBoard();
-          drawMiniPiece(nextCtx, nextPiece);
-          drawMiniPiece(holdCtx, heldPiece);
-        } catch (e2) {
-          console.error('[VBlocks] redraw recovery failed', e2);
-        }
-      }
-    }
-
-    function drawMiniPiece(c, piece) {
-      if (!c) return;
-      clearCanvas(c, c.canvas);
-      if (!piece) return;
-
-      const safePiece = sanitizePiece(piece, piece.letter || 'I');
-      if (!safePiece || !safePiece.shape) {
-        console.warn('[VBlocks] drawMiniPiece skipped invalid piece', piece);
-        return;
-      }
-
-      const cssW = c.canvas.width  / DPR;
-      const cssH = c.canvas.height / DPR;
-
-      const shape = safePiece.shape;
-      let minX =  99, minY =  99, maxX = -99, maxY = -99;
-      shape.forEach((row, y) => {
-        row.forEach((val, x) => {
-          if (val) {
-            if (x < minX) minX = x;
-            if (x > maxX) maxX = x;
-            if (y < minY) minY = y;
-            if (y > maxY) maxY = y;
-          }
-        });
-      });
-      const w = maxX - minX + 1;
-      const h = maxY - minY + 1;
-
-      const PAD = 6;
-      const cellSize = Math.min(
-        (cssW - 2 * PAD) / w,
-        (cssH - 2 * PAD) / h
-      );
-
-      const offsetX = (cssW - (w * cellSize)) / 2 - minX * cellSize;
-      const offsetY = (cssH - (h * cellSize)) / 2 - minY * cellSize;
-
-      c.save();
-      try {
-        c.translate(offsetX, offsetY);
-        shape.forEach((row, y) => {
-          row.forEach((val, x) => {
-            if (!val) return;
-            drawBlockCustom(
-              c,
-              x,
-              y,
-              safePiece.letter,
-              cellSize,
-              false,
-              (currentTheme && isVariantTheme(currentTheme)) ? safePiece.variants?.[y]?.[x] : 0
-            );
-          });
-        });
-      } finally {
-        c.restore();
-      }
-    }
-
-    function reset() {
-      stopSoftDrop();
-      mustLiftFingerForNextSoftDrop = true;
-
-      currentPiece = sanitizePiece(nextPiece, nextPiece?.letter || 'I') || newPiece();
-      nextPiece = newPiece();
-      holdUsed = false;
-      ensureRenderablePieces();
-      drawMiniPiece(nextCtx, nextPiece);
-      drawMiniPiece(holdCtx, heldPiece);
-      scheduleSave();
     }
 
     function update(now) {
@@ -1829,8 +1269,17 @@ if (score > highscoreCloud) {
       try {
         const jetons = await userData.getJetons();
         const vcoins = await userData.getVCoins();
-        const j = document.getElementById('header-jetons') || document.getElementById('jetonsCount');
-        const v = document.getElementById('header-vcoins') || document.getElementById('vcoinsCount');
+
+        const j =
+          document.getElementById('header-jetons') ||
+          document.getElementById('jetonsCount') ||
+          document.getElementById('jeton-amount');
+
+        const v =
+          document.getElementById('header-vcoins') ||
+          document.getElementById('vcoinsCount') ||
+          document.getElementById('vcoin-amount');
+
         if (j) j.textContent = String(jetons ?? 0);
         if (v) v.textContent = String(vcoins ?? 0);
       } catch (_) {}
