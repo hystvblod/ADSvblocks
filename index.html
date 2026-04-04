@@ -157,10 +157,10 @@
     }
 
     #gameCanvas{
-      width:auto;
-      height:min(78vh, calc(100vh - 170px));
+      width:min(calc((100vh - 170px) * 0.5), 92vw);
+      height:auto;
       aspect-ratio:10/20;
-      max-width:min(92vw, 560px);
+      max-height:calc(100vh - 170px);
       background:var(--canvas-bg);
       border-radius:12px;
       display:block;
@@ -171,9 +171,10 @@
     @media (max-width: 900px){
       .main-content{ width:100vw; }
       .top-bar, .top-canvas-row{ max-width:680px; }
+
       #gameCanvas{
-        height:min(76vh, calc(100vh - 165px));
-        max-width:min(94vw, 500px);
+        width:min(calc((100vh - 165px) * 0.5), 94vw);
+        max-height:calc(100vh - 165px);
       }
     }
 
@@ -195,14 +196,15 @@
       }
 
       #gameCanvas{
-        height:min(74vh, calc(100vh - 150px));
-        max-width:min(96vw, 420px);
+        width:min(calc((100vh - 150px) * 0.5), 96vw);
+        max-height:calc(100vh - 150px);
       }
     }
 
     @media (max-height: 760px){
       #gameCanvas{
-        height:min(72vh, calc(100vh - 145px));
+        width:min(calc((100vh - 145px) * 0.5), 96vw);
+        max-height:calc(100vh - 145px);
       }
     }
   </style>
