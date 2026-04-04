@@ -20,35 +20,190 @@
       --btn-hover-bg: #243929; --btn-hover-color: #7fff8c; --btn-hover-border: #b3ffc1; --btn-shadow: 0 0 8px #4ed17c;
     }
     body { background: var(--body-bg,#111); color:var(--body-color,#ccc); }
-    .game-viewport { position:fixed; inset:0; display:flex; justify-content:center; align-items:flex-start; overflow:hidden; }
-    .main-content { display:flex; flex-direction:column; width:520px; max-width:100%; align-items:center; transform-origin:top center; padding:6px 0 18px; }
-    .top-bar { width:100%; display:flex; flex-direction:column; padding:6px 12px 0; }
-    .top-bar-row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
-    .btn-back { background:none; border:none; color:var(--title-color); font-size:24px; width:42px; height:42px; }
-    .main-title { flex:1; text-align:center; font-weight:900; letter-spacing:1px; color:var(--title-color); }
-    .profile-row { width:42px; }
+    .game-viewport{
+      position:fixed;
+      inset:0;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+      overflow:hidden;
+      padding:0;
+    }
 
-    .top-canvas-row { width:100%; max-width:460px; display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-top:2px; }
-    .side-canvas-block { display:flex; flex-direction:column; align-items:center; gap:8px; min-width:76px; }
-    .side-canvas-block label { color:var(--panel-text); font-weight:800; text-align:center; font-size:16px; letter-spacing:.06em; }
+    .main-content{
+      display:flex;
+      flex-direction:column;
+      width:min(100vw, 820px);
+      height:100vh;
+      align-items:center;
+      justify-content:flex-start;
+      transform-origin:top center;
+      padding:max(8px, env(safe-area-inset-top)) 10px max(14px, env(safe-area-inset-bottom));
+    }
 
-    .center-score-block { flex:1; display:flex; justify-content:center; align-items:flex-start; min-width:0; padding-top:4px; }
-    .center-score-inline { display:flex; align-items:baseline; justify-content:center; gap:8px; text-align:center; }
-    .center-score-label { font-size:18px; font-weight:900; color:var(--panel-text); letter-spacing:.04em; }
-    .center-score-value { font-size:40px; font-weight:900; line-height:1; color:#ffd800; text-shadow:0 0 10px rgba(255,216,0,.28); }
+    .top-bar{
+      width:100%;
+      max-width:760px;
+      display:flex;
+      flex-direction:column;
+      padding:4px 0 0;
+      flex:0 0 auto;
+    }
 
-    #holdCanvas,#nextCanvas { background:var(--canvas-panel-bg); border:2px dashed var(--canvas-panel-border); border-radius:8px; }
-    #gameCanvas { width:100%; max-width:410px; aspect-ratio:10/20; background:var(--canvas-bg); border-radius:8px; display:block; margin:14px auto 20px; touch-action:none; }
+    .top-bar-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+    }
 
-    @media (max-width: 480px) {
-      .main-content { width:100%; }
-      .top-bar { padding:6px 8px 0; }
-      .top-canvas-row { max-width:100%; gap:10px; }
-      .side-canvas-block { min-width:62px; }
-      .side-canvas-block label { font-size:14px; }
-      .center-score-label { font-size:16px; }
-      .center-score-value { font-size:32px; }
-      #gameCanvas { max-width:360px; margin:10px auto 16px; }
+    .btn-back{
+      background:none;
+      border:none;
+      color:var(--title-color);
+      font-size:24px;
+      width:42px;
+      height:42px;
+    }
+
+    .main-title{
+      flex:1;
+      text-align:center;
+      font-weight:900;
+      letter-spacing:1px;
+      color:var(--title-color);
+      font-size:clamp(20px, 2.3vw, 34px);
+    }
+
+    .profile-row{ width:42px; }
+
+    .top-canvas-row{
+      width:100%;
+      max-width:760px;
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:18px;
+      margin-top:4px;
+      flex:0 0 auto;
+    }
+
+    .side-canvas-block{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+      min-width:84px;
+      flex:0 0 auto;
+    }
+
+    .side-canvas-block label{
+      color:var(--panel-text);
+      font-weight:800;
+      text-align:center;
+      font-size:clamp(14px, 1.5vw, 22px);
+      letter-spacing:.06em;
+      line-height:1;
+    }
+
+    .center-score-block{
+      flex:1 1 auto;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+      min-width:0;
+      padding-top:2px;
+    }
+
+    .center-score-inline{
+      display:flex;
+      align-items:baseline;
+      justify-content:center;
+      gap:8px;
+      text-align:center;
+      flex-wrap:wrap;
+    }
+
+    .center-score-label{
+      font-size:clamp(16px, 1.9vw, 26px);
+      font-weight:900;
+      color:var(--panel-text);
+      letter-spacing:.04em;
+    }
+
+    .center-score-value{
+      font-size:clamp(28px, 4vw, 52px);
+      font-weight:900;
+      line-height:1;
+      color:#ffd800;
+      text-shadow:0 0 10px rgba(255,216,0,.28);
+    }
+
+    #holdCanvas,#nextCanvas{
+      background:var(--canvas-panel-bg);
+      border:2px dashed var(--canvas-panel-border);
+      border-radius:8px;
+    }
+
+    .game-flex-wrap{
+      width:100%;
+      flex:1 1 auto;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+      min-height:0;
+      padding-top:10px;
+      padding-bottom:18px;
+    }
+
+    #gameCanvas{
+      width:auto;
+      height:min(78vh, calc(100vh - 170px));
+      aspect-ratio:10/20;
+      max-width:min(92vw, 560px);
+      background:var(--canvas-bg);
+      border-radius:12px;
+      display:block;
+      margin:0 auto;
+      touch-action:none;
+    }
+
+    @media (max-width: 900px){
+      .main-content{ width:100vw; }
+      .top-bar, .top-canvas-row{ max-width:680px; }
+      #gameCanvas{
+        height:min(76vh, calc(100vh - 165px));
+        max-width:min(94vw, 500px);
+      }
+    }
+
+    @media (max-width: 600px){
+      .main-content{
+        padding-top:max(6px, env(safe-area-inset-top));
+        padding-left:8px;
+        padding-right:8px;
+        padding-bottom:max(12px, env(safe-area-inset-bottom));
+      }
+
+      .top-canvas-row{
+        gap:10px;
+      }
+
+      .side-canvas-block{
+        min-width:64px;
+        gap:6px;
+      }
+
+      #gameCanvas{
+        height:min(74vh, calc(100vh - 150px));
+        max-width:min(96vw, 420px);
+      }
+    }
+
+    @media (max-height: 760px){
+      #gameCanvas{
+        height:min(72vh, calc(100vh - 145px));
+      }
     }
   </style>
 </head>
@@ -295,28 +450,8 @@ function fillRectThemeSafe(c, px, py, size) {
 
     function fitWholeGameUI() {
       if (!mainContent) return;
-
-      mainContent.style.transform = 'scale(1)';
+      mainContent.style.transform = 'none';
       mainContent.style.marginTop = '0px';
-
-      requestAnimationFrame(() => {
-        const baseW = mainContent.offsetWidth || 430;
-        const baseH = Math.max(mainContent.scrollHeight, mainContent.offsetHeight, 1);
-
-        const scale = Math.min(
-          window.innerWidth / baseW,
-          window.innerHeight / baseH,
-          1
-        );
-
-        const top = Math.max(
-          0,
-          Math.floor((window.innerHeight - (baseH * scale)) / 2)
-        );
-
-        mainContent.style.transform = `scale(${scale})`;
-        mainContent.style.marginTop = `${top}px`;
-      });
     }
 
     function boardOffsets() {
@@ -343,7 +478,7 @@ function fillRectThemeSafe(c, px, py, size) {
     fitCanvasToCSS();
 
     function getMiniCanvasTarget() {
-      return Math.max(52, Math.min(72, Math.round(window.innerWidth * 0.13)));
+      return Math.max(48, Math.min(88, Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.085)));
     }
 
     sizeMiniCanvas(holdCanvas, holdCtx, getMiniCanvasTarget());
@@ -354,7 +489,7 @@ function fillRectThemeSafe(c, px, py, size) {
       cancelAnimationFrame(resizeRAF);
       resizeRAF = requestAnimationFrame(() => {
         if (mainContent) {
-          mainContent.style.transform = 'scale(1)';
+          mainContent.style.transform = 'none';
           mainContent.style.marginTop = '0px';
         }
 
