@@ -21,21 +21,35 @@
     }
     body { background: var(--body-bg,#111); color:var(--body-color,#ccc); }
     .game-viewport { position:fixed; inset:0; display:flex; justify-content:center; align-items:flex-start; overflow:hidden; }
-    .main-content { display:flex; flex-direction:column; width:430px; align-items:center; transform-origin:top center; }
-    .top-bar { width:100%; display:flex; flex-direction:column; padding:10px 10px 0; }
+    .main-content { display:flex; flex-direction:column; width:520px; max-width:100%; align-items:center; transform-origin:top center; padding:6px 0 18px; }
+    .top-bar { width:100%; display:flex; flex-direction:column; padding:6px 12px 0; }
     .top-bar-row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
     .btn-back { background:none; border:none; color:var(--title-color); font-size:24px; width:42px; height:42px; }
     .main-title { flex:1; text-align:center; font-weight:900; letter-spacing:1px; color:var(--title-color); }
     .profile-row { width:42px; }
-    .top-canvas-row { width:100%; max-width:410px; display:flex; justify-content:space-between; align-items:flex-start; margin-top:-8px; }
-    .side-canvas-block { display:flex; flex-direction:column; align-items:center; gap:6px; min-width:72px; }
-    .side-canvas-block label { color:var(--panel-text); font-weight:700; text-align:center; }
-    .center-score-block { min-width:110px; text-align:center; padding-top:2px; }
-    .center-score-label { font-size:12px; font-weight:700; color:var(--panel-text); opacity:.9; text-transform:uppercase; letter-spacing:.08em; }
-    .center-score-value { font-size:28px; font-weight:900; line-height:1; color:#ffd800; text-shadow:0 0 10px rgba(255,216,0,.28); }
+
+    .top-canvas-row { width:100%; max-width:460px; display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-top:2px; }
+    .side-canvas-block { display:flex; flex-direction:column; align-items:center; gap:8px; min-width:76px; }
+    .side-canvas-block label { color:var(--panel-text); font-weight:800; text-align:center; font-size:16px; letter-spacing:.06em; }
+
+    .center-score-block { flex:1; display:flex; justify-content:center; align-items:flex-start; min-width:0; padding-top:4px; }
+    .center-score-inline { display:flex; align-items:baseline; justify-content:center; gap:8px; text-align:center; }
+    .center-score-label { font-size:18px; font-weight:900; color:var(--panel-text); letter-spacing:.04em; }
+    .center-score-value { font-size:40px; font-weight:900; line-height:1; color:#ffd800; text-shadow:0 0 10px rgba(255,216,0,.28); }
+
     #holdCanvas,#nextCanvas { background:var(--canvas-panel-bg); border:2px dashed var(--canvas-panel-border); border-radius:8px; }
-    #gameCanvas { width:100%; max-width:330px; aspect-ratio:10/20; background:var(--canvas-bg); border-radius:8px; display:block; margin:0 auto; touch-action:none; }
-    @media (max-width: 480px) { .main-content{width:100vw;} .top-canvas-row{margin-top:0;} .center-score-value{font-size:24px;} }
+    #gameCanvas { width:100%; max-width:410px; aspect-ratio:10/20; background:var(--canvas-bg); border-radius:8px; display:block; margin:14px auto 20px; touch-action:none; }
+
+    @media (max-width: 480px) {
+      .main-content { width:100%; }
+      .top-bar { padding:6px 8px 0; }
+      .top-canvas-row { max-width:100%; gap:10px; }
+      .side-canvas-block { min-width:62px; }
+      .side-canvas-block label { font-size:14px; }
+      .center-score-label { font-size:16px; }
+      .center-score-value { font-size:32px; }
+      #gameCanvas { max-width:360px; margin:10px auto 16px; }
+    }
   </style>
 </head>
 <body data-theme="cyber">
@@ -48,12 +62,14 @@
       </div>
     </div>
     <div class="top-canvas-row">
-      <div class="side-canvas-block"><label>Reserve</label><canvas id="holdCanvas" width="48" height="48"></canvas></div>
+      <div class="side-canvas-block"><label>HOLD</label><canvas id="holdCanvas" width="48" height="48"></canvas></div>
       <div class="center-score-block">
-        <div class="center-score-label">Score</div>
-        <div class="center-score-value" id="score">0</div>
+        <div class="center-score-inline">
+          <span class="center-score-label">Score :</span>
+          <span class="center-score-value" id="score">0</span>
+        </div>
       </div>
-      <div class="side-canvas-block"><label>Next</label><canvas id="nextCanvas" width="48" height="48"></canvas></div>
+      <div class="side-canvas-block"><label>NEXT</label><canvas id="nextCanvas" width="48" height="48"></canvas></div>
     </div>
     <div class="game-flex-wrap"><canvas id="gameCanvas"></canvas></div>
   </div></div>
@@ -325,8 +341,13 @@ function fillRectThemeSafe(c, px, py, size) {
     }
 
     fitCanvasToCSS();
-    sizeMiniCanvas(holdCanvas, holdCtx, 48);
-    sizeMiniCanvas(nextCanvas, nextCtx, 48);
+
+    function getMiniCanvasTarget() {
+      return Math.max(52, Math.min(72, Math.round(window.innerWidth * 0.13)));
+    }
+
+    sizeMiniCanvas(holdCanvas, holdCtx, getMiniCanvasTarget());
+    sizeMiniCanvas(nextCanvas, nextCtx, getMiniCanvasTarget());
     fitWholeGameUI();
 
     window.addEventListener('resize', () => {
@@ -338,8 +359,8 @@ function fillRectThemeSafe(c, px, py, size) {
         }
 
         fitCanvasToCSS();
-        sizeMiniCanvas(holdCanvas, holdCtx, 48);
-        sizeMiniCanvas(nextCanvas, nextCtx, 48);
+        sizeMiniCanvas(holdCanvas, holdCtx, getMiniCanvasTarget());
+        sizeMiniCanvas(nextCanvas, nextCtx, getMiniCanvasTarget());
 
         safeRedraw();
         drawMiniPiece(holdCtx, heldPiece);
@@ -914,252 +935,61 @@ overlay.querySelector('#resume-yes').onclick = () => {
     // Nouvelle popup de fin de partie (+ revive)
     function showEndPopup(points) {
       if (endHandled) return;
-      // ⚠️ on NE met PAS endHandled=true ici — on attend la confirmation fin
-      try { window.partieTerminee?.(); } catch(_){}
+      try { window.partieTerminee?.(); } catch(_) {}
 
       paused = true;
       stopSoftDrop();
       stopHorizontalRepeat();
-
       safeRedraw();
-
-      // on efface ttes sauvegardes → pas de "reprendre"
       clearSavedGame();
-
-      // ❌ Ancienne IIFE de crédit supprimée : on crédite au Restart/Quit
 
       const old = document.getElementById('gameover-popup');
       if (old) old.remove();
 
-      if (mode === 'duel') {
+      if (mode === 'duel' && typeof handleDuelEnd === 'function') {
         handleDuelEnd(points);
         return;
       }
 
-      const canRevive = !reviveUsed;
+      const STORE_URL = 'https://play.google.com/store/apps/details?id=com.vboldstudio.VBlocks';
+      let busy = false;
+
+      async function goStore() {
+        if (busy) return;
+        busy = true;
+        clearTimeout(autoOpenTimer);
+
+        try { await commitEndRewards(points); } catch (_) {}
+        endHandled = true;
+        window.location.href = STORE_URL;
+      }
+
       const popup = document.createElement('div');
       popup.id = 'gameover-popup';
       popup.style = `
-        position: fixed; left:0; top:0; width:100vw; height:100vh; z-index:99999;
-        background: rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center;
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        background: rgba(0,0,0,0.60);
+        display:flex;
+        align-items:center;
+        justify-content:center;
       `;
-      const rewardAmount = Number(window.REWARD_VCOINS || 300);
-      let rewardClaimedOnEndPopup = false;
       popup.innerHTML = `
-        <div style="background:#23294a;border-radius:1em;padding:24px 16px;box-shadow:0 0 14px #3ff7;min-width:260px;max-width:92vw;text-align:center">
-          <div style="font-size:1.2em;font-weight:bold;margin-bottom:10px;">
-            <span>${tt('end.title','Partie terminée')}</span><br>
-            <span>+${points} ${tt('end.points','points')}</span>
-          </div>
-
-          <div style="opacity:.9;margin-bottom:14px">
-            ${tt('end.subtitle','Que voulez-vous faire ?')}
-          </div>
-
-          <div style="display:flex;flex-direction:column;gap:10px;width:100%">
-            <button
-              id="end-reward-vcoins"
-              class="btn-primary"
-              style="
-                width:100%;
-                padding:.85em 1em;
-                border-radius:1em;
-                border:none;
-                background:linear-gradient(180deg,#2f7bff 0%,#1e55d6 100%);
-                color:#fff;
-                cursor:pointer;
-                display:flex;
-                align-items:center;
-                justify-content:center;
-                box-shadow:0 0 12px #39f7;
-              "
-            >
-              <span style="display:flex;align-items:center;justify-content:center;gap:10px;font-weight:800;width:100%;">
-                <img src="assets/images/vcoin.webp" alt="" style="width:24px;height:24px;object-fit:contain;">
-                <span>+${rewardAmount}</span>
-              </span>
-            </button>
-
-            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-              <button
-                id="end-revive-token"
-                class="btn"
-                style="padding:.6em 1.1em;border-radius:.8em;background:#2a7;color:#fff;cursor:pointer;${canRevive ? '' : 'display:none;'}"
-              >
-                ${tt('end.revive.token','Revivre (1 jeton)')}
-              </button>
-
-              <button
-                id="end-revive-ad"
-                class="btn"
-                style="padding:.6em 1.1em;border:none;border-radius:.8em;background:#a73;color:#fff;cursor:pointer;${canRevive ? '' : 'display:none;'}"
-              >
-                ${tt('end.revive.ad','Revivre (pub)')}
-              </button>
-            </div>
-
-            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-              <button
-                id="end-restart"
-                class="btn-primary"
-                style="padding:.6em 1.1em;border-radius:.8em;border:none;background:#39f;color:#fff;cursor:pointer;"
-              >
-                ${tt('end.restart','Recommencer')}
-              </button>
-
-              <button
-                id="end-quit"
-                class="btn"
-                style="padding:.6em 1.1em;border-radius:.8em;border:none;background:#444;color:#fff;cursor:pointer;"
-              >
-                ${tt('end.quit','Quitter')}
-              </button>
-            </div>
-          </div>
+        <div style="background:#23294a;border-radius:1em;padding:24px 18px;box-shadow:0 0 14px #3ff7;min-width:260px;max-width:92vw;text-align:center">
+          <div style="font-size:1.25em;font-weight:900;margin-bottom:14px;">Continue ?</div>
+          <button
+            id="end-continue-store"
+            style="padding:.8em 1.4em;border-radius:.9em;border:none;background:#39f;color:#fff;cursor:pointer;font-weight:800;"
+          >
+            Continue ?
+          </button>
         </div>
       `;
       document.body.appendChild(popup);
 
-      async function doRevive(withAd) {
-        if (withAd) {
-          // Marque pub active (pour le gel) puis réinitialise quoi qu’il arrive
-          window.__ads_active = true;
-          window.__ads_freeze = true;
-          const resetAds = () => { window.__ads_active = false; window.__ads_freeze = false; };
-
-          if (typeof window.showRewardRevive === 'function') {
-            const ok = await new Promise(resolve => {
-              try { window.showRewardRevive(closedOk => resolve(!!closedOk)); }
-              catch(_) { resolve(false); }
-            });
-            resetAds();
-            if (!ok) return;
-
-            reviveUsed = true;
-            try { popup.remove(); } catch(_) {}
-            // ✅ Réarmer les flags pour permettre la prochaine popup de fin
-            endHandled = false;
-            creditDone = false;
-            gameOver = false;
-            reviveRewindAndResume();
-            return;
-          }
-
-          // Fallback web/dev si showRewardRevive indisponible
-          await showInterstitial();
-          resetAds();
-          reviveUsed = true;
-          try { popup.remove(); } catch(_) {}
-          endHandled = false;
-          creditDone = false;
-          gameOver = false;
-          reviveRewindAndResume();
-          return;
-        }
-
-        // Revive via JETON
-        const okTok = await useJeton();
-        if (!okTok) { alert('Pas assez de jetons.'); return; }
-        reviveUsed = true;
-        try { popup.remove(); } catch(_) {}
-        endHandled = false;      // ✅ clé : autoriser la prochaine popup
-        creditDone = false;      // ✅ pas de crédit encore
-        gameOver = false;
-        reviveRewindAndResume();
-      }
-
-      document.getElementById('end-restart').onclick = async function () {
-        await commitEndRewards(points);
-        endHandled = true;
-
-        try { window.VRCrossPromo?.notifyCompletedRun?.(); } catch (_) {}
-        try {
-          await window.VRCrossPromo?.maybeShowPostGamePromo?.({
-            skipBecauseRewardAd: false
-          });
-        } catch (_) {}
-
-        popup.remove();
-        restartGameHard();
-      };
-
-      document.getElementById('end-quit').onclick = async function () {
-        await commitEndRewards(points);
-        endHandled = true;
-
-        try { window.VRCrossPromo?.notifyCompletedRun?.(); } catch (_) {}
-        try {
-          await window.VRCrossPromo?.maybeShowPostGamePromo?.({
-            skipBecauseRewardAd: false
-          });
-        } catch (_) {}
-
-        window.location.href = INDEX_URL;
-      };
-      const btnTok = document.getElementById('end-revive-token');
-      const btnAd = document.getElementById('end-revive-ad');
-      const btnReward = document.getElementById('end-reward-vcoins');
-      if (btnReward?.animate) {
-        btnReward.animate(
-          [
-            { transform: 'scale(1)', boxShadow: '0 0 12px #39f7' },
-            { transform: 'scale(1.04)', boxShadow: '0 0 24px #39f7' },
-            { transform: 'scale(1)', boxShadow: '0 0 12px #39f7' }
-          ],
-          {
-            duration: 1600,
-            iterations: Infinity,
-            easing: 'ease-in-out'
-          }
-        );
-      }
-
-      if (btnTok) btnTok.onclick = function () { doRevive(false); };
-      if (btnAd) btnAd.onclick = function () { doRevive(true); };
-
-      if (btnReward) {
-        btnReward.onclick = async function () {
-          if (rewardClaimedOnEndPopup) return;
-
-          btnReward.disabled = true;
-          btnReward.style.opacity = '.7';
-
-          try {
-            const ok = (typeof window.showRewardVcoins === 'function')
-              ? await window.showRewardVcoins()
-              : false;
-
-            if (!ok) {
-              btnReward.disabled = false;
-              btnReward.style.opacity = '1';
-              return;
-            }
-
-            rewardClaimedOnEndPopup = true;
-            btnReward.style.display = 'none';
-
-            try {
-              if (typeof window.updateVCoinsDisplay === 'function') {
-                await window.updateVCoinsDisplay();
-              }
-            } catch (_) {}
-
-            try {
-              const vcoins = await userData.getVCoins?.();
-              const el =
-                document.getElementById('header-vcoins') ||
-                document.getElementById('vcoinsCount') ||
-                document.getElementById('vcoin-amount');
-
-              if (el) el.textContent = String(vcoins ?? 0);
-            } catch (_) {}
-          } catch (_) {
-            btnReward.disabled = false;
-            btnReward.style.opacity = '1';
-            alert(tt('pub.err','Publicité indisponible pour le moment.'));
-          }
-        };
-      }
+      const autoOpenTimer = setTimeout(goStore, 8000);
+      document.getElementById('end-continue-store').onclick = goStore;
     }
 
     function reviveRewindAndResume() {
