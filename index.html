@@ -157,10 +157,10 @@
     }
 
     #gameCanvas{
-      width:auto;
-      height:min(78vh, calc(100vh - 170px));
+      width:min(calc((100vh - 170px) * 0.5), 92vw);
+      height:auto;
       aspect-ratio:10/20;
-      max-width:min(92vw, 560px);
+      max-height:calc(100vh - 170px);
       background:var(--canvas-bg);
       border-radius:12px;
       display:block;
@@ -171,9 +171,10 @@
     @media (max-width: 900px){
       .main-content{ width:100vw; }
       .top-bar, .top-canvas-row{ max-width:680px; }
+
       #gameCanvas{
-        height:min(76vh, calc(100vh - 165px));
-        max-width:min(94vw, 500px);
+        width:min(calc((100vh - 165px) * 0.5), 94vw);
+        max-height:calc(100vh - 165px);
       }
     }
 
@@ -195,14 +196,15 @@
       }
 
       #gameCanvas{
-        height:min(74vh, calc(100vh - 150px));
-        max-width:min(96vw, 420px);
+        width:min(calc((100vh - 150px) * 0.5), 96vw);
+        max-height:calc(100vh - 150px);
       }
     }
 
     @media (max-height: 760px){
       #gameCanvas{
-        height:min(72vh, calc(100vh - 145px));
+        width:min(calc((100vh - 145px) * 0.5), 96vw);
+        max-height:calc(100vh - 145px);
       }
     }
   </style>
@@ -1001,12 +1003,10 @@ overlay.querySelector('#resume-yes').onclick = () => {
     function restartGameHard() {
       try { window.partieRecommencee?.(mode); } catch(_){}
 
-      // stop timers
       stopSoftDrop();
       stopHorizontalRepeat();
       if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
 
-      // reset state
       board = Array.from({ length: ROWS }, () => Array(COLS).fill(''));
       currentPiece = null;
       nextPiece = null;
@@ -1021,11 +1021,10 @@ overlay.querySelector('#resume-yes').onclick = () => {
       history = [];
       lastTime = 0;
       reviveRampActive = false;
-      reviveUsed = false; // ✅ on ré-autorise 1 revive pour la nouvelle partie
+      reviveUsed = false;
       endHandled = false;
       creditDone = false;
 
-      // UI
       const scoreEl = document.getElementById('score');
       if (scoreEl) scoreEl.textContent = '0';
       drawMiniPiece(nextCtx, null);
@@ -1034,13 +1033,19 @@ overlay.querySelector('#resume-yes').onclick = () => {
 
       clearSavedGame();
 
-      // start new
-      if (mode === 'duel') {
-        // duel séquence déjà set dans setupDuelSequence
-      } else {
+      if (mode !== 'duel') {
         piecesSequence = generateSequenceClassic(200);
         piecesUsed = 0;
       }
+
+      if (SHOWCASE_START_ENABLED && mode === 'classic') {
+        applyShowcaseStartState();
+        saveHistory();
+        window.startMusicForGame?.();
+        requestAnimationFrame(update);
+        return;
+      }
+
       nextPiece = newPiece();
       reset();
       saveHistory();
@@ -1276,6 +1281,94 @@ requestAnimationFrame(update);
 const scoreEl = document.getElementById('score');
 if (scoreEl) scoreEl.textContent = '0';
 
+const SHOWCASE_START_ENABLED = true;
+
+const SHOWCASE_FILLED_CELLS = [
+  [8,12,'S'],
+
+  [8,13,'S'], [9,13,'S'],
+
+  [0,14,'L'], [1,14,'L'], [2,14,'L'],
+  [5,14,'O'], [6,14,'O'],
+  [8,14,'S'], [9,14,'S'],
+
+  [0,15,'L'], [1,15,'S'], [2,15,'S'],
+  [5,15,'Z'], [6,15,'L'],
+  [7,15,'J'], [8,15,'J'], [9,15,'S'],
+
+  [1,16,'Z'], [2,16,'Z'],
+  [4,16,'Z'], [5,16,'Z'],
+  [6,16,'L'], [7,16,'J'],
+  [8,16,'O'], [9,16,'O'],
+
+  [0,17,'I'],
+  [1,17,'Z'], [2,17,'Z'],
+  [4,17,'Z'],
+  [5,17,'T'],
+  [6,17,'L'],
+  [7,17,'O'], [8,17,'O'], [9,17,'O'],
+
+  [0,18,'I'],
+  [1,18,'Z'], [2,18,'Z'],
+  [4,18,'L'],
+  [5,18,'T'], [6,18,'T'], [7,18,'T'],
+  [8,18,'O'], [9,18,'O'],
+
+  [0,19,'I'],
+  [1,19,'Z'],
+  [2,19,'L'],
+  [4,19,'L'],
+  [5,19,'T'], [6,19,'T'], [7,19,'T'],
+  [8,19,'S'], [9,19,'S']
+];
+
+function buildShowcaseBoard() {
+  const b = Array.from({ length: ROWS }, () => Array(COLS).fill(''));
+  SHOWCASE_FILLED_CELLS.forEach(([x, y, t]) => {
+    if (x >= 0 && x < COLS && y >= 0 && y < ROWS) {
+      b[y][x] = t;
+    }
+  });
+  return b;
+}
+
+function makeShowcasePiece(letter, x, y) {
+  const p = createSafePiece(letter);
+  p.x = x;
+  p.y = y;
+  return p;
+}
+
+function applyShowcaseStartState() {
+  board = buildShowcaseBoard();
+
+  // Pièce verte en haut à gauche comme sur la capture
+  currentPiece = makeShowcasePiece('J', 0, 2);
+
+  // Réserve / Suivante en rose comme sur la capture
+  heldPiece = makeShowcasePiece('T', 0, 0);
+  nextPiece = makeShowcasePiece('T', 0, 0);
+
+  holdUsed = false;
+  score = 150;
+  combo = 0;
+  linesCleared = 0;
+  dropInterval = 500;
+  gameOver = false;
+  paused = false;
+  reviveUsed = false;
+  endHandled = false;
+  creditDone = false;
+
+  ensureRenderablePieces();
+
+  if (scoreEl) scoreEl.textContent = String(score);
+  drawMiniPiece(nextCtx, nextPiece);
+  drawMiniPiece(holdCtx, heldPiece);
+  safeRedraw();
+  scheduleSave();
+}
+
 // Cherche l’élément à l’instant où on en a besoin (pas au chargement)
 function setHighText(val) {
   const el = document.getElementById('highscore') || document.getElementById('highscore-global');
@@ -1323,15 +1416,25 @@ window.updateHighScoreDisplay = updateHighscoreDisplay;
       paused = false;
       gameOver = false;
       lastTime = 0;
-      reviveUsed = false; // ✅ nouvelle partie → re-autorise 1 revive
+      reviveUsed = false;
       endHandled = false;
       creditDone = false;
 
       if (mode === 'duel') await setupDuelSequence();
+
       if (mode !== 'duel') {
         piecesSequence = generateSequenceClassic(200);
         piecesUsed = 0;
       }
+
+      if (SHOWCASE_START_ENABLED && mode === 'classic') {
+        applyShowcaseStartState();
+        saveHistory();
+        window.startMusicForGame?.();
+        requestAnimationFrame(update);
+        return;
+      }
+
       nextPiece = newPiece();
       reset();
       saveHistory();
@@ -1957,6 +2060,12 @@ if (score > highscoreCloud) {
       updateBalancesHeader();
       updateHighscoreDisplay();
       refreshMusicBtn();
+
+      if (SHOWCASE_START_ENABLED) {
+        clearSavedGame();
+        await startGame();
+        return;
+      }
 
       const savedLocal = loadSavedLocal();
       if (savedLocal) {
