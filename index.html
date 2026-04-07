@@ -207,6 +207,37 @@
         max-height:calc(100vh - 145px);
       }
     }
+
+    @keyframes vb-showcase-pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 14px rgba(76,255,124,.22); }
+      50% { transform: scale(1.08); box-shadow: 0 0 24px rgba(76,255,124,.42); }
+    }
+
+    @keyframes vb-showcase-hand-swipe {
+      0%   { transform: translateX(42px) rotate(-8deg); opacity: .15; }
+      18%  { opacity: .95; }
+      50%  { transform: translateX(0px) rotate(0deg); opacity: 1; }
+      100% { transform: translateX(-62px) rotate(6deg); opacity: .15; }
+    }
+
+    #showcase-hand-hint{
+      position:fixed;
+      width:64px;
+      height:64px;
+      z-index:99990;
+      pointer-events:none;
+    }
+
+    #showcase-hand-hint img{
+      display:block;
+      width:100%;
+      height:auto;
+      filter:drop-shadow(0 0 10px rgba(255,255,255,.2));
+      animation: vb-showcase-hand-swipe 1.2s ease-in-out infinite;
+      transform-origin:center center;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
   </style>
 </head>
 <body data-theme="cyber">
@@ -1006,6 +1037,7 @@ overlay.querySelector('#resume-yes').onclick = () => {
       stopSoftDrop();
       stopHorizontalRepeat();
       if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+      clearShowcaseAutoStoreFlow();
 
       board = Array.from({ length: ROWS }, () => Array(COLS).fill(''));
       currentPiece = null;
@@ -1041,6 +1073,7 @@ overlay.querySelector('#resume-yes').onclick = () => {
       if (SHOWCASE_START_ENABLED && mode === 'classic') {
         applyShowcaseStartState();
         saveHistory();
+        startShowcaseAutoStoreFlow();
         window.startMusicForGame?.();
         requestAnimationFrame(update);
         return;
@@ -1076,6 +1109,8 @@ overlay.querySelector('#resume-yes').onclick = () => {
     function showEndPopup(points) {
       if (endHandled) return;
       try { window.partieTerminee?.(); } catch(_) {}
+
+      clearShowcaseAutoStoreFlow(false);
 
       paused = true;
       stopSoftDrop();
@@ -1120,7 +1155,7 @@ overlay.querySelector('#resume-yes').onclick = () => {
           <div style="font-size:1.25em;font-weight:900;margin-bottom:14px;">Continue ?</div>
           <button
             id="end-continue-store"
-            style="padding:.8em 1.4em;border-radius:.9em;border:none;background:#39f;color:#fff;cursor:pointer;font-weight:800;"
+            style="padding:.8em 1.4em;border-radius:.9em;border:none;background:#39f;color:#fff;cursor:pointer;font-weight:800;animation:vb-showcase-pulse 1s ease-in-out infinite;"
           >
             Continue ?
           </button>
@@ -1282,6 +1317,13 @@ const scoreEl = document.getElementById('score');
 if (scoreEl) scoreEl.textContent = '0';
 
 const SHOWCASE_START_ENABLED = true;
+const SHOWCASE_AUTO_STORE_DELAY_MS = 8000;
+const SHOWCASE_HAND_ASSET = 'assets/hand.webp';
+
+let showcaseAutoStoreTimer = null;
+let showcaseHandEl = null;
+let showcaseHandResizeHandler = null;
+let showcaseAutoStoreTriggered = false;
 
 const SHOWCASE_FILLED_CELLS = [
   [8,12,'S'],
@@ -1375,6 +1417,74 @@ function applyShowcaseStartState() {
   scheduleSave();
 }
 
+function positionShowcaseHandHint() {
+  if (!showcaseHandEl) return;
+  const rect = canvas.getBoundingClientRect();
+  showcaseHandEl.style.left = `${rect.left + rect.width * 0.70 - 32}px`;
+  showcaseHandEl.style.top = `${rect.top + rect.height * 0.60}px`;
+}
+
+function removeShowcaseHandHint() {
+  if (showcaseHandResizeHandler) {
+    window.removeEventListener('resize', showcaseHandResizeHandler);
+    showcaseHandResizeHandler = null;
+  }
+  if (showcaseHandEl) {
+    showcaseHandEl.remove();
+    showcaseHandEl = null;
+  }
+}
+
+function showShowcaseHandHint() {
+  removeShowcaseHandHint();
+
+  showcaseHandEl = document.createElement('div');
+  showcaseHandEl.id = 'showcase-hand-hint';
+  showcaseHandEl.innerHTML = `<img src="${SHOWCASE_HAND_ASSET}" alt="">`;
+  document.body.appendChild(showcaseHandEl);
+
+  positionShowcaseHandHint();
+  showcaseHandResizeHandler = () => positionShowcaseHandHint();
+  window.addEventListener('resize', showcaseHandResizeHandler);
+}
+
+function clearShowcaseAutoStoreFlow(resetState = true) {
+  clearTimeout(showcaseAutoStoreTimer);
+  showcaseAutoStoreTimer = null;
+
+  removeShowcaseHandHint();
+
+  if (resetState) {
+    showcaseAutoStoreTriggered = false;
+  }
+}
+
+async function openShowcaseStoreDirect() {
+  if (showcaseAutoStoreTriggered || endHandled || gameOver) return;
+  showcaseAutoStoreTriggered = true;
+
+  clearShowcaseAutoStoreFlow(false);
+
+  try { await commitEndRewards(score); } catch (_) {}
+  endHandled = true;
+  window.location.href = 'https://play.google.com/store/apps/details?id=com.vboldstudio.VBlocks';
+}
+
+function startShowcaseAutoStoreFlow() {
+  clearShowcaseAutoStoreFlow();
+  showcaseAutoStoreTriggered = false;
+
+  if (!SHOWCASE_START_ENABLED || mode !== 'classic') return;
+
+  showShowcaseHandHint();
+
+  showcaseAutoStoreTimer = setTimeout(() => {
+    if (!gameOver && !endHandled) {
+      openShowcaseStoreDirect();
+    }
+  }, SHOWCASE_AUTO_STORE_DELAY_MS);
+}
+
 // Cherche l’élément à l’instant où on en a besoin (pas au chargement)
 function setHighText(val) {
   const el = document.getElementById('highscore') || document.getElementById('highscore-global');
@@ -1436,6 +1546,7 @@ window.updateHighScoreDisplay = updateHighscoreDisplay;
       if (SHOWCASE_START_ENABLED && mode === 'classic') {
         applyShowcaseStartState();
         saveHistory();
+        startShowcaseAutoStoreFlow();
         window.startMusicForGame?.();
         requestAnimationFrame(update);
         return;
@@ -2057,6 +2168,7 @@ if (score > highscoreCloud) {
     // ===== BOUTONS topbar =====
     const btnBack = document.getElementById('back-btn');
     if (btnBack) btnBack.addEventListener('click', () => {
+      clearShowcaseAutoStoreFlow();
       if (score > 0 && !gameOver) saveStateNow();
       window.location.href = INDEX_URL;
     });
