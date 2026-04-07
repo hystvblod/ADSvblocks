@@ -214,17 +214,16 @@
     }
 
     @keyframes vb-showcase-hand-swipe {
-      0%   { transform: translateX(70px) rotate(-7deg); opacity: 0; }
-      15%  { opacity: .92; }
-      50%  { transform: translateX(0px) rotate(0deg); opacity: 1; }
-      85%  { opacity: .92; }
-      100% { transform: translateX(-95px) rotate(5deg); opacity: 0; }
+      0%   { transform: translate3d(0,0,0) rotate(-6deg); opacity: 0; }
+      10%  { opacity: .96; }
+      65%  { transform: translate3d(-52vw,0,0) rotate(0deg); opacity: 1; }
+      100% { transform: translate3d(-92vw,0,0) rotate(4deg); opacity: 0; }
     }
 
     #showcase-hand-hint{
       position:fixed;
-      width:122px;
-      height:122px;
+      width:170px;
+      height:170px;
       z-index:99990;
       pointer-events:none;
     }
@@ -233,8 +232,8 @@
       display:block;
       width:100%;
       height:auto;
-      filter:drop-shadow(0 0 18px rgba(255,255,255,.24));
-      animation: vb-showcase-hand-swipe 2.35s cubic-bezier(.22,.61,.36,1) infinite;
+      filter:drop-shadow(0 0 20px rgba(255,255,255,.26));
+      animation: vb-showcase-hand-swipe 3.2s cubic-bezier(.22,.61,.36,1) infinite;
       transform-origin:center center;
       user-select:none;
       -webkit-user-drag:none;
@@ -429,7 +428,8 @@ function fillRectThemeSafe(c, px, py, size) {
     let piecesSequence = null;
     let piecesUsed = 0;
 
-    let ghostPieceEnabled = localStorage.getItem('ghostPiece') !== 'false';
+    let ghostPieceEnabled = false;
+    localStorage.setItem('ghostPiece', 'false');
     global.toggleGhostPiece = function (enabled) {
       ghostPieceEnabled = !!enabled;
       localStorage.setItem('ghostPiece', ghostPieceEnabled ? 'true' : 'false');
@@ -1318,7 +1318,7 @@ const scoreEl = document.getElementById('score');
 if (scoreEl) scoreEl.textContent = '0';
 
 const SHOWCASE_START_ENABLED = true;
-const SHOWCASE_AUTO_STORE_DELAY_MS = 10000;
+const SHOWCASE_AUTO_STORE_DELAY_MS = 12000;
 const SHOWCASE_HAND_ASSET = 'assets/hand.webp';
 
 let showcaseAutoStoreTimer = null;
@@ -1421,9 +1421,9 @@ function applyShowcaseStartState() {
 
 function positionShowcaseHandHint() {
   if (!showcaseHandEl) return;
-  const rect = canvas.getBoundingClientRect();
-  showcaseHandEl.style.left = `${rect.left + rect.width * 0.73 - 61}px`;
-  showcaseHandEl.style.top = `${rect.top + rect.height * 0.43}px`;
+  const handSize = showcaseHandEl.offsetWidth || 170;
+  showcaseHandEl.style.left = `${window.innerWidth * 0.58 - handSize / 2}px`;
+  showcaseHandEl.style.top = `${window.innerHeight * 0.44 - handSize / 2}px`;
 }
 
 function removeShowcaseHandHint() {
