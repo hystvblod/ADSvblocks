@@ -1323,6 +1323,7 @@ const SHOWCASE_HAND_ASSET = 'assets/hand.webp';
 let showcaseAutoStoreTimer = null;
 let showcaseHandEl = null;
 let showcaseHandResizeHandler = null;
+let showcaseHandDismissHandler = null;
 let showcaseAutoStoreTriggered = false;
 
 const SHOWCASE_FILLED_CELLS = [
@@ -1429,6 +1430,12 @@ function removeShowcaseHandHint() {
     window.removeEventListener('resize', showcaseHandResizeHandler);
     showcaseHandResizeHandler = null;
   }
+  if (showcaseHandDismissHandler) {
+    window.removeEventListener('pointerdown', showcaseHandDismissHandler, true);
+    window.removeEventListener('touchstart', showcaseHandDismissHandler, true);
+    window.removeEventListener('mousedown', showcaseHandDismissHandler, true);
+    showcaseHandDismissHandler = null;
+  }
   if (showcaseHandEl) {
     showcaseHandEl.remove();
     showcaseHandEl = null;
@@ -1446,6 +1453,13 @@ function showShowcaseHandHint() {
   positionShowcaseHandHint();
   showcaseHandResizeHandler = () => positionShowcaseHandHint();
   window.addEventListener('resize', showcaseHandResizeHandler);
+
+  showcaseHandDismissHandler = () => {
+    removeShowcaseHandHint();
+  };
+  window.addEventListener('pointerdown', showcaseHandDismissHandler, true);
+  window.addEventListener('touchstart', showcaseHandDismissHandler, true);
+  window.addEventListener('mousedown', showcaseHandDismissHandler, true);
 }
 
 function clearShowcaseAutoStoreFlow(resetState = true) {
