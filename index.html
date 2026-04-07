@@ -1296,6 +1296,7 @@ const SHOWCASE_FILLED_CELLS = [
   [5,15,'Z'], [6,15,'L'],
   [7,15,'J'], [8,15,'J'], [9,15,'S'],
 
+  [0,16,'I'],
   [1,16,'Z'], [2,16,'Z'],
   [4,16,'Z'], [5,16,'Z'],
   [6,16,'L'], [7,16,'J'],
@@ -1342,8 +1343,9 @@ function makeShowcasePiece(letter, x, y) {
 function applyShowcaseStartState() {
   board = buildShowcaseBoard();
 
-  // Pièce verte en haut à gauche comme sur la capture
-  currentPiece = makeShowcasePiece('J', 0, 2);
+  // Pièce de départ = bâton vertical
+  currentPiece = makeShowcasePiece('I', 0, 2);
+  currentPiece.shape = [[1],[1],[1],[1]];
 
   // Réserve / Suivante en rose comme sur la capture
   heldPiece = makeShowcasePiece('T', 0, 0);
