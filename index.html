@@ -214,16 +214,17 @@
     }
 
     @keyframes vb-showcase-hand-swipe {
-      0%   { transform: translateX(42px) rotate(-8deg); opacity: .15; }
-      18%  { opacity: .95; }
+      0%   { transform: translateX(70px) rotate(-7deg); opacity: 0; }
+      15%  { opacity: .92; }
       50%  { transform: translateX(0px) rotate(0deg); opacity: 1; }
-      100% { transform: translateX(-62px) rotate(6deg); opacity: .15; }
+      85%  { opacity: .92; }
+      100% { transform: translateX(-95px) rotate(5deg); opacity: 0; }
     }
 
     #showcase-hand-hint{
       position:fixed;
-      width:64px;
-      height:64px;
+      width:122px;
+      height:122px;
       z-index:99990;
       pointer-events:none;
     }
@@ -232,8 +233,8 @@
       display:block;
       width:100%;
       height:auto;
-      filter:drop-shadow(0 0 10px rgba(255,255,255,.2));
-      animation: vb-showcase-hand-swipe 1.2s ease-in-out infinite;
+      filter:drop-shadow(0 0 18px rgba(255,255,255,.24));
+      animation: vb-showcase-hand-swipe 2.35s cubic-bezier(.22,.61,.36,1) infinite;
       transform-origin:center center;
       user-select:none;
       -webkit-user-drag:none;
@@ -1317,7 +1318,7 @@ const scoreEl = document.getElementById('score');
 if (scoreEl) scoreEl.textContent = '0';
 
 const SHOWCASE_START_ENABLED = true;
-const SHOWCASE_AUTO_STORE_DELAY_MS = 8000;
+const SHOWCASE_AUTO_STORE_DELAY_MS = 10000;
 const SHOWCASE_HAND_ASSET = 'assets/hand.webp';
 
 let showcaseAutoStoreTimer = null;
@@ -1390,8 +1391,8 @@ function applyShowcaseStartState() {
   currentPiece = {
     letter: 'I',
     shape: [[1],[1],[1],[1]],
-    x: 4,
-    y: 2
+    x: 3,
+    y: -3
   };
 
   // Réserve / Suivante en rose comme sur la capture
@@ -1421,8 +1422,8 @@ function applyShowcaseStartState() {
 function positionShowcaseHandHint() {
   if (!showcaseHandEl) return;
   const rect = canvas.getBoundingClientRect();
-  showcaseHandEl.style.left = `${rect.left + rect.width * 0.70 - 32}px`;
-  showcaseHandEl.style.top = `${rect.top + rect.height * 0.60}px`;
+  showcaseHandEl.style.left = `${rect.left + rect.width * 0.73 - 61}px`;
+  showcaseHandEl.style.top = `${rect.top + rect.height * 0.43}px`;
 }
 
 function removeShowcaseHandHint() {
