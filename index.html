@@ -1343,8 +1343,13 @@ function makeShowcasePiece(letter, x, y) {
 function applyShowcaseStartState() {
   board = buildShowcaseBoard();
 
-  // Pièce verte en haut à gauche comme sur la capture
-  currentPiece = makeShowcasePiece('I', 4, 2);
+  // Pièce de départ = I bien verticale et centrée
+  currentPiece = {
+    letter: 'I',
+    shape: [[1],[1],[1],[1]],
+    x: 4,
+    y: 2
+  };
 
   // Réserve / Suivante en rose comme sur la capture
   heldPiece = makeShowcasePiece('T', 0, 0);
