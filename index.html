@@ -117,11 +117,11 @@
 
     .center-score-inline{
       display:flex;
-      align-items:baseline;
+      flex-direction:column;
+      align-items:center;
       justify-content:center;
-      gap:8px;
+      gap:10px;
       text-align:center;
-      flex-wrap:wrap;
     }
 
     .center-score-label{
@@ -137,6 +137,30 @@
       line-height:1;
       color:#ffd800;
       text-shadow:0 0 10px rgba(255,216,0,.28);
+    }
+
+    .center-score-topline{
+      display:flex;
+      align-items:baseline;
+      justify-content:center;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .install-cta-btn{
+      min-width:190px;
+      min-height:54px;
+      padding:0 24px;
+      border:none;
+      border-radius:16px;
+      background:linear-gradient(180deg, #ffb347 0%, #ff7a18 100%);
+      color:#fff;
+      font-size:clamp(22px, 2.5vw, 28px);
+      font-weight:900;
+      letter-spacing:.02em;
+      cursor:pointer;
+      box-shadow:0 0 18px rgba(255,138,24,.35);
+      animation:vb-showcase-pulse 1s ease-in-out infinite;
     }
 
     #holdCanvas,#nextCanvas{
@@ -253,8 +277,11 @@
       <div class="side-canvas-block"><label>HOLD</label><canvas id="holdCanvas" width="48" height="48"></canvas></div>
       <div class="center-score-block">
         <div class="center-score-inline">
-          <span class="center-score-label">Score :</span>
-          <span class="center-score-value" id="score">0</span>
+          <div class="center-score-topline">
+            <span class="center-score-label">Score :</span>
+            <span class="center-score-value" id="score">0</span>
+          </div>
+          <button id="install-btn" class="install-cta-btn" type="button">Installer</button>
         </div>
       </div>
       <div class="side-canvas-block"><label>NEXT</label><canvas id="nextCanvas" width="48" height="48"></canvas></div>
@@ -1127,7 +1154,7 @@ overlay.querySelector('#resume-yes').onclick = () => {
         return;
       }
 
-      const STORE_URL = 'https://play.google.com/store/apps/details?id=com.vboldstudio.VBlocks';
+      const STORE_URL = SHOWCASE_STORE_URL;
       let busy = false;
 
       async function goStore() {
@@ -1318,7 +1345,8 @@ const scoreEl = document.getElementById('score');
 if (scoreEl) scoreEl.textContent = '0';
 
 const SHOWCASE_START_ENABLED = true;
-const SHOWCASE_AUTO_STORE_DELAY_MS = 12000;
+const SHOWCASE_AUTO_STORE_DELAY_MS = 15000;
+const SHOWCASE_STORE_URL = 'https://play.google.com/store/apps/details?id=com.vboldstudio.VBlocks';
 const SHOWCASE_HAND_ASSET = 'assets/hand.webp';
 
 let showcaseAutoStoreTimer = null;
@@ -1482,7 +1510,7 @@ async function openShowcaseStoreDirect() {
 
   try { await commitEndRewards(score); } catch (_) {}
   endHandled = true;
-  window.location.href = 'https://play.google.com/store/apps/details?id=com.vboldstudio.VBlocks';
+  window.location.href = SHOWCASE_STORE_URL;
 }
 
 function startShowcaseAutoStoreFlow() {
@@ -2180,6 +2208,80 @@ if (score > highscoreCloud) {
       safeRedraw();
     }, { passive:false });
 
+    // ===== CONTRÔLES TACTILES DIRECTS SUR LE CANVAS =====
+    const TOUCH_TAP_MAX_TIME = 220;
+    const TOUCH_TAP_MAX_DISTANCE = 14;
+    const TOUCH_STEP_X = 26;
+    const TOUCH_STEP_Y = 24;
+
+    let canvasTouchState = null;
+
+    canvas.addEventListener('pointerdown', (e) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if (paused || gameOver) return;
+
+      canvasTouchState = {
+        id: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        startTime: performance.now(),
+        appliedDx: 0,
+        appliedDy: 0
+      };
+
+      try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+      e.preventDefault();
+    }, { passive:false });
+
+    canvas.addEventListener('pointermove', (e) => {
+      if (!canvasTouchState || e.pointerId !== canvasTouchState.id) return;
+      if (paused || gameOver) return;
+
+      const totalDx = e.clientX - canvasTouchState.startX;
+      const totalDy = e.clientY - canvasTouchState.startY;
+
+      while (totalDx - canvasTouchState.appliedDx >= TOUCH_STEP_X) {
+        move(1);
+        canvasTouchState.appliedDx += TOUCH_STEP_X;
+      }
+
+      while (totalDx - canvasTouchState.appliedDx <= -TOUCH_STEP_X) {
+        move(-1);
+        canvasTouchState.appliedDx -= TOUCH_STEP_X;
+      }
+
+      while (totalDy - canvasTouchState.appliedDy >= TOUCH_STEP_Y) {
+        dropPiece();
+        canvasTouchState.appliedDy += TOUCH_STEP_Y;
+        if (gameOver) break;
+      }
+
+      safeRedraw();
+      e.preventDefault();
+    }, { passive:false });
+
+    function endCanvasTouch(e) {
+      if (!canvasTouchState || e.pointerId !== canvasTouchState.id) return;
+
+      const totalDx = e.clientX - canvasTouchState.startX;
+      const totalDy = e.clientY - canvasTouchState.startY;
+      const dist = Math.hypot(totalDx, totalDy);
+      const dt = performance.now() - canvasTouchState.startTime;
+
+      try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+
+      if (dist <= TOUCH_TAP_MAX_DISTANCE && dt <= TOUCH_TAP_MAX_TIME && !paused && !gameOver) {
+        rotatePiece();
+        safeRedraw();
+      }
+
+      canvasTouchState = null;
+      e.preventDefault();
+    }
+
+    canvas.addEventListener('pointerup', endCanvasTouch, { passive:false });
+    canvas.addEventListener('pointercancel', endCanvasTouch, { passive:false });
+
     // ===== BOUTONS topbar =====
     const btnBack = document.getElementById('back-btn');
     if (btnBack) btnBack.addEventListener('click', () => {
@@ -2187,6 +2289,13 @@ if (score > highscoreCloud) {
       if (score > 0 && !gameOver) saveStateNow();
       window.location.href = INDEX_URL;
     });
+
+    const installBtn = document.getElementById('install-btn');
+    if (installBtn) {
+      installBtn.addEventListener('click', () => {
+        openShowcaseStoreDirect();
+      });
+    }
 
     // ===== REPRISE de partie =====
     document.addEventListener('DOMContentLoaded', async () => {
