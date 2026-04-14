@@ -379,15 +379,23 @@ function fillRectThemeSafe(c, px, py, size) {
     refreshMusicBtn();
   };
 
-  window.startMusicForGame = function () {
-    if (!music) return;
-    if (isMusicAlwaysMuted()) {
-      pauseMusic();
-      return;
-    }
-    music.currentTime = 0;
-    playMusicAuto();
-  };
+window.startMusicForGame = function () {
+  if (!music) return;
+  if (isMusicAlwaysMuted()) {
+    pauseMusic();
+    return;
+  }
+  if (window.musicStarted && !music.paused) return;
+
+  music.play()
+    .then(() => {
+      window.musicStarted = true;
+      refreshMusicBtn();
+    })
+    .catch(() => {
+      window.musicStarted = false;
+    });
+};
   window.addEventListener('storage', (e) => {
     if (e.key === 'alwaysMuteMusic') {
       refreshMusicBtn();
@@ -396,12 +404,18 @@ function fillRectThemeSafe(c, px, py, size) {
     }
   });
   // Démarrage audio sur premier input (pas d’attente réseau)
-  window.addEventListener('pointerdown', function autoStartMusic() {
-    if (!window.musicStarted && !isMusicAlwaysMuted()) {
-      playMusicAuto();
+window.addEventListener('pointerdown', function autoStartMusic() {
+  if (window.musicStarted || isMusicAlwaysMuted() || !music) return;
+
+  music.play()
+    .then(() => {
       window.musicStarted = true;
-    }
-  }, { once: true });
+      refreshMusicBtn();
+    })
+    .catch(() => {
+      window.musicStarted = false;
+    });
+}, { passive: true });
 
   setTimeout(refreshMusicBtn, 200);
   document.addEventListener('DOMContentLoaded', () => {
