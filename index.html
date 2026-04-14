@@ -265,6 +265,7 @@
       -webkit-user-drag:none;
     }
   </style>
+<script type="text/javascript" src="https://tpc.googlesyndication.com/pagead/gadgets/html5/api/exitapi.js"></script>
 </head>
 <body data-theme="cyber">
   <div class="game-viewport"><div class="main-content">
@@ -292,25 +293,57 @@
   </div></div>
   <audio id="music" src="assets/sounds/chill.m4a" loop></audio>
   <script>
-    localStorage.setItem('themeVBlocks', 'cyber');
-    window.i18nGet = (k)=>k;
-    window.userData = {
-      async getVCoins(){ return Number(localStorage.getItem('ads_vcoins')||0); },
-      async addVCoins(n){ const v=Number(localStorage.getItem('ads_vcoins')||0)+Number(n||0); localStorage.setItem('ads_vcoins', String(v)); return v; },
-      async getJetons(){ return Number(localStorage.getItem('ads_jetons')||3); },
-      async addJetons(n){ const v=Math.max(0,Number(localStorage.getItem('ads_jetons')||3)+Number(n||0)); localStorage.setItem('ads_jetons', String(v)); return v; },
-      async getHighScore(){ return Number(localStorage.getItem('ads_highscore')||0); },
-      async setHighScore(n){ localStorage.setItem('ads_highscore', String(n||0)); return n||0; }
-    };
-    window.showInterstitial = async ()=>true;
-  </script>
+  window.__adState = {
+    theme: 'cyber',
+    alwaysMuteMusic: false,
+    ghostPiece: false,
+    ads_vcoins: 0,
+    ads_jetons: 3,
+    ads_highscore: 0
+  };
+
+  function adGet(key, fallback) {
+    return Object.prototype.hasOwnProperty.call(window.__adState, key)
+      ? window.__adState[key]
+      : fallback;
+  }
+
+  function adSet(key, value) {
+    window.__adState[key] = value;
+    return value;
+  }
+
+  window.i18nGet = (k) => k;
+
+  window.userData = {
+    async getVCoins(){ return Number(adGet('ads_vcoins', 0) || 0); },
+    async addVCoins(n){
+      const v = Number(adGet('ads_vcoins', 0) || 0) + Number(n || 0);
+      adSet('ads_vcoins', v);
+      return v;
+    },
+    async getJetons(){ return Number(adGet('ads_jetons', 3) || 3); },
+    async addJetons(n){
+      const v = Math.max(0, Number(adGet('ads_jetons', 3) || 3) + Number(n || 0));
+      adSet('ads_jetons', v);
+      return v;
+    },
+    async getHighScore(){ return Number(adGet('ads_highscore', 0) || 0); },
+    async setHighScore(n){
+      adSet('ads_highscore', Number(n || 0));
+      return Number(n || 0);
+    }
+  };
+
+  window.showInterstitial = async ()=>true;
+</script>
   <script>
 // --- PATCH anti-lignes (ne s'applique qu'au thème "nuit") ---
 function fillRectThemeSafe(c, px, py, size) {
   const theme =
     (typeof getCurrentTheme === 'function'
       ? getCurrentTheme()
-      : (localStorage.getItem('themeVBlocks') || 'cyber'));
+      : ((window.__adState && window.__adState.theme) || 'cyber'));
 
   if (theme === 'nuit') {
     const pad = 0.5;
@@ -329,7 +362,7 @@ function fillRectThemeSafe(c, px, py, size) {
   if (music) music.volume = 0.45;
 
   function isMusicAlwaysMuted() {
-    return localStorage.getItem('alwaysMuteMusic') === 'true';
+    return !!(window.__adState && window.__adState.alwaysMuteMusic);
   }
   function playMusicAuto() {
     if (!music) return;
@@ -355,7 +388,9 @@ function fillRectThemeSafe(c, px, py, size) {
     btn.innerHTML = `<img src="assets/icons/${icon}.svg" alt="${muted ? 'Muet' : 'Actif'}" class="music-btn-img">`;
   }
   window.setMusicAlwaysMuted = function (val) {
-    localStorage.setItem('alwaysMuteMusic', val ? 'true' : 'false');
+    if (window.__adState) {
+      window.__adState.alwaysMuteMusic = !!val;
+    }
     if (val) {
       pauseMusic();
     } else {
@@ -381,14 +416,7 @@ window.startMusicForGame = function () {
       window.musicStarted = false;
     });
 };
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'alwaysMuteMusic') {
-      refreshMusicBtn();
-      if (isMusicAlwaysMuted()) pauseMusic();
-      else playMusicAuto();
-    }
-  });
-  // Démarrage audio sur premier input (pas d’attente réseau)
+    // Démarrage audio sur premier input (pas d’attente réseau)
 window.addEventListener('pointerdown', function autoStartMusic() {
   if (window.musicStarted || isMusicAlwaysMuted() || !music) return;
 
@@ -414,7 +442,9 @@ window.addEventListener('pointerdown', function autoStartMusic() {
       if (typeof window.setMusicAlwaysMuted === 'function') {
         window.setMusicAlwaysMuted(nextMute);
       } else {
-        localStorage.setItem('alwaysMuteMusic', nextMute ? 'true' : 'false');
+        if (window.__adState) {
+          window.__adState.alwaysMuteMusic = !!nextMute;
+        }
         if (music) {
           if (nextMute) music.pause();
           else music.play().catch(()=>{});
@@ -458,7 +488,7 @@ window.addEventListener('pointerdown', function autoStartMusic() {
   function isVariantTheme(name) {
     const t = name || (typeof getCurrentTheme === 'function'
       ? getCurrentTheme()
-      : (localStorage.getItem('themeVBlocks') || 'cyber'));
+      : ((window.__adState && window.__adState.theme) || 'cyber'));
     return t === 'space' || t === 'vitraux' || t === 'luxury';
   }
 
@@ -472,10 +502,14 @@ window.addEventListener('pointerdown', function autoStartMusic() {
     let piecesUsed = 0;
 
     let ghostPieceEnabled = false;
-    localStorage.setItem('ghostPiece', 'false');
+    if (window.__adState) {
+      window.__adState.ghostPiece = false;
+    }
     global.toggleGhostPiece = function (enabled) {
       ghostPieceEnabled = !!enabled;
-      localStorage.setItem('ghostPiece', ghostPieceEnabled ? 'true' : 'false');
+      if (window.__adState) {
+        window.__adState.ghostPiece = ghostPieceEnabled;
+      }
       safeRedraw();
     };
 
@@ -583,7 +617,7 @@ window.addEventListener('pointerdown', function autoStartMusic() {
     });
 
     const THEMES = ['cyber', 'neon', 'nuit', 'nature', 'bubble', 'retro', 'space', 'vitraux', 'luxury', 'grece', 'arabic', 'angelique', 'japon'];
-    let currentTheme = localStorage.getItem('themeVBlocks') || 'cyber';
+    let currentTheme = (window.__adState && window.__adState.theme) || 'cyber';
     let currentThemeIndex = Math.max(0, THEMES.indexOf(currentTheme));
     const blockImages = {};
 
@@ -673,7 +707,9 @@ window.addEventListener('pointerdown', function autoStartMusic() {
 
     function changeTheme(themeName) {
       document.body.setAttribute('data-theme', themeName);
-      localStorage.setItem('themeVBlocks', themeName);
+      if (window.__adState) {
+        window.__adState.theme = themeName;
+      }
       const style = document.getElementById('theme-style');
       if (style) style.href = getThemeCssHref(themeName);
       loadBlockImages(themeName);
@@ -684,7 +720,7 @@ window.addEventListener('pointerdown', function autoStartMusic() {
     loadBlockImages(currentTheme);
     // --- Suit le thème choisi dans le profil (évènement envoyé par profil.html)
     window.addEventListener('vblocks-theme-changed', (e) => {
-      const t = (e?.detail?.theme) || localStorage.getItem('themeVBlocks') || 'cyber';
+      const t = (e?.detail?.theme) || ((window.__adState && window.__adState.theme) || 'cyber');
       if (t) changeTheme(t);
     });
 
@@ -918,7 +954,6 @@ window.addEventListener('pointerdown', function autoStartMusic() {
       };
     }
     function clearSavedGame() {
-      try { localStorage.removeItem(SAVE_KEY); } catch (_e) {}
       saveStateCloud(null).catch(()=>{});
     }
     function safeParse(json) {
@@ -926,11 +961,7 @@ window.addEventListener('pointerdown', function autoStartMusic() {
     }
 
     function saveStateNowLocal() {
-      if (!CAN_RESUME) return;
-      try {
-        const payload = { version: 3, ts: Date.now(), state: getSavableState() };
-        localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
-      } catch (_e) {}
+      return;
     }
 
     async function saveStateNow() {
@@ -948,19 +979,7 @@ window.addEventListener('pointerdown', function autoStartMusic() {
     }
 
     function loadSavedLocal() {
-      if (!CAN_RESUME) return null;
-      const raw = localStorage.getItem(SAVE_KEY);
-      if (!raw) return null;
-      const parsed = safeParse(raw);
-      if (!parsed || !parsed.state) return null;
-      const st = parsed.state;
-      if ((Date.now() - (parsed.ts || st.ts || 0)) > SAVE_TTL_MS) {
-        try { localStorage.removeItem(SAVE_KEY); } catch (_e) {}
-        return null;
-      }
-      if (st.mode !== mode) return null;
-      if (!st.inProgress) return null;
-      return st;
+      return null;
     }
 
     function restoreFromSave(s) {
@@ -988,7 +1007,7 @@ window.addEventListener('pointerdown', function autoStartMusic() {
         }
 
     // Préfère TOUJOURS le thème actuel choisi par l’utilisateur
-const desiredTheme = localStorage.getItem('themeVBlocks') || s.theme || currentTheme;
+const desiredTheme = ((window.__adState && window.__adState.theme) || s.theme || currentTheme);
 if (THEMES.includes(desiredTheme) && desiredTheme !== currentTheme) {
   changeTheme(desiredTheme);
 }
@@ -1362,7 +1381,7 @@ if (scoreEl) scoreEl.textContent = '0';
 
 const SHOWCASE_START_ENABLED = true;
 const SHOWCASE_AUTO_STORE_DELAY_MS = 15000;
-const SHOWCASE_STORE_URL = 'https://play.google.com/store/apps/details?id=com.vboldstudio.VBlocks';
+const SHOWCASE_STORE_URL = '';
 const SHOWCASE_HAND_ASSET = 'assets/hand.webp';
 
 let showcaseAutoStoreTimer = null;
@@ -1526,7 +1545,11 @@ async function openShowcaseStoreDirect() {
 
   try { await commitEndRewards(score); } catch (_) {}
   endHandled = true;
-  window.location.href = SHOWCASE_STORE_URL;
+
+  if (typeof ExitApi !== 'undefined' && typeof ExitApi.exit === 'function') {
+    ExitApi.exit();
+    return;
+  }
 }
 
 function startShowcaseAutoStoreFlow() {
@@ -2220,7 +2243,9 @@ if (score > highscoreCloud) {
       e.preventDefault();
       if (paused || gameOver) return;
       ghostPieceEnabled = !ghostPieceEnabled;
-      localStorage.setItem('ghostPiece', ghostPieceEnabled ? 'true' : 'false');
+      if (window.__adState) {
+        window.__adState.ghostPiece = ghostPieceEnabled;
+      }
       safeRedraw();
     }, { passive:false });
 
